@@ -1,7 +1,8 @@
 package io.github.teamcheeze.remoteActions.util;
 
 public enum ExceptionCodes {
-    DUPLICATE_CLIENT_CODE(-100);
+    DUPLICATE_CLIENT_CODE(-100),
+    CLIENT_MISMATCH(-101);
     private final int id;
     ExceptionCodes(int id) {
         this.id = id;
