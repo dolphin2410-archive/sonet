@@ -1,7 +1,8 @@
-package io.github.teamcheeze.remoteActions.network;
+package io.github.teamcheeze.remoteActions.network.connection;
 
 import io.github.teamcheeze.remoteActions.Main;
 import io.github.teamcheeze.remoteActions.client.Client;
+import io.github.teamcheeze.remoteActions.network.Address;
 import io.github.teamcheeze.remoteActions.server.Server;
 import io.github.teamcheeze.remoteActions.util.ExceptionCodes;
 import org.jetbrains.annotations.Nullable;

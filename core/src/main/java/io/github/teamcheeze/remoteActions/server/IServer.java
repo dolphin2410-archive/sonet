@@ -23,6 +23,9 @@ public class IServer implements Server {
         this.address = address;
     }
 
+    public ServerConfigurations config = new ServerConfigurations();
+    // TODO Initialize file
+
     @Override
     public @NotNull UUID getId() {
         return id;
