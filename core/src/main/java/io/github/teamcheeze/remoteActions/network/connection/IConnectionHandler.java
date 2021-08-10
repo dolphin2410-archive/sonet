@@ -1,19 +1,17 @@
 package io.github.teamcheeze.remoteActions.network.connection;
 
-import io.github.teamcheeze.remoteActions.Main;
 import io.github.teamcheeze.remoteActions.client.Client;
-import io.github.teamcheeze.remoteActions.network.Address;
+import io.github.teamcheeze.remoteActions.network.client.ClientAddress;
+import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.server.Server;
 import io.github.teamcheeze.remoteActions.util.ExceptionCodes;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.Inet4Address;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 public class IConnectionHandler {
     private final static ArrayList<Client> registeredClients = new ArrayList<>();
@@ -32,39 +30,35 @@ public class IConnectionHandler {
      */
     @Nullable
     private static Client getClient(Function<Client, Boolean> filter) {
-        Stream<Client> filtered = registeredClients.stream().filter(filter::apply);
-        if (filtered.count() != 1) {
-            if (filtered.count() > 1) {
+        List<Client> filtered = registeredClients.stream().filter(filter::apply).toList();
+        if (filtered.size() != 1) {
+            if (filtered.size() > 1) {
                 System.exit(ExceptionCodes.DUPLICATE_CLIENT_CODE.getId());
             }
             return null;
         }
-        Optional<Client> optionalClient = filtered.reduce((first, second)->first);
-        if (optionalClient.isEmpty()) {
-            return null;
-        }
-        return optionalClient.get();
+        return filtered.get(0);
     }
 
     @Nullable
     private static Server getServer(Function<Server, Boolean> filter) {
-        Stream<Server> filtered = registeredServers.stream().filter(filter::apply);
-        if (filtered.count() != 1) {
-            if (filtered.count() > 1) {
+        List<Server> filtered = registeredServers.stream().filter(filter::apply).toList();
+        if (filtered.size() != 1) {
+            if (filtered.size() > 1) {
                 System.exit(ExceptionCodes.DUPLICATE_CLIENT_CODE.getId());
             }
             return null;
         }
-        Optional<Server> optionalClient = filtered.reduce((first, second)->first);
-        if (optionalClient.isEmpty()) {
-            return null;
-        }
-        return optionalClient.get();
+        return filtered.get(0);
+    }
+    @Nullable
+    public static Client getClient(ClientAddress clientAddress) {
+        return getClient((client)->client.getAddress() == clientAddress);
     }
 
     @Nullable
-    public static Client getClient(Address clientAddress) {
-        return getClient((client)->client.getAddress() == clientAddress);
+    public static Client getClient(Inet4Address clientAddress) {
+        return getClient((client -> client.getAddress().getIp().getHostAddress().equals(clientAddress.getHostAddress())));
     }
 
     @Nullable
@@ -73,7 +67,7 @@ public class IConnectionHandler {
     }
 
     @Nullable
-    public static Server getServer(Address serverAddress) {
+    public static Server getServer(ServerAddress serverAddress) {
         return getServer((server)->server.getAddress() == serverAddress);
     }
 

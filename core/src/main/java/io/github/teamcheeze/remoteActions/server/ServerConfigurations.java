@@ -1,8 +1,9 @@
 package io.github.teamcheeze.remoteActions.server;
 
 import java.io.File;
+import java.io.Serializable;
 
-public class ServerConfigurations {
+public class ServerConfigurations implements Serializable {
     private File rootFile;
 
     public ServerConfigurations() {

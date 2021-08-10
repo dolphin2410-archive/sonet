@@ -19,6 +19,12 @@ public class ServerFileChangePacket implements Packet<FileChangeRequest> {
         return result;
     }
 
+    @Override
+    public void updateData(Packet<FileChangeRequest> updated) {
+        this.data = updated.getData();
+        this.result = updated.getResult();
+    }
+
     private void setResult(Object result) {
         this.result = result;
     }

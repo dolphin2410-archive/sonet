@@ -1,17 +1,17 @@
 package io.github.teamcheeze.remoteActions.client;
 
-import io.github.teamcheeze.remoteActions.network.Address;
-import io.github.teamcheeze.remoteActions.network.Connection;
-import io.github.teamcheeze.remoteActions.network.Packet;
+import io.github.teamcheeze.remoteActions.network.*;
+import io.github.teamcheeze.remoteActions.network.client.ClientAddress;
+import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
+import io.github.teamcheeze.remoteActions.util.Machine;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.Inet4Address;
-import java.net.Socket;
+import java.net.InetAddress;
 import java.util.UUID;
 
-public interface Client {
+public interface Client extends NetworkComponent {
 
     /**
      * Connect to a server.
@@ -21,14 +21,25 @@ public interface Client {
      * @throws IOException When invalid host
      */
     @NotNull
-    Connection connect(Inet4Address ipv4, int port) throws IOException;
+    Connection connect(InetAddress ipv4, int port) throws IOException;
 
+    /**
+     * Connects to a server with the address instance.
+     * @param address The address
+     * @return The established connection.
+     * @throws IOException when there was an I/O Exception during the connection.
+     */
     @NotNull
-    default Connection connect(Address address) throws IOException {
-        return connect(address.ipv4, address.port);
+    default Connection connect(ServerAddress address) throws IOException {
+        return connect(address.ip, address.port);
     }
 
-    void sendPacket(Packet<?> packet);
+    @NotNull
+    default Connection connect(int port) throws IOException {
+        return connect(Machine.localAddress.ip, port);
+    }
+
+    <R extends PacketData, T extends Packet<R>> T sendPacket(Connection connection, T packet);
 
     /**
      * The unique client's id
@@ -41,5 +52,5 @@ public interface Client {
      * The client's system ip address
      * @return The client's system ip address
      */
-    @NotNull Address getAddress();
+    @NotNull ClientAddress getAddress();
 }

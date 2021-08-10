@@ -18,6 +18,12 @@ public class ServerFileReadPacket implements Packet<FileReadRequest> {
         return result;
     }
 
+    @Override
+    public void updateData(Packet<FileReadRequest> updated) {
+        this.result = updated.getResult();
+        this.data = updated.getData();
+    }
+
     @NotNull
     @Override
     public FileReadRequest getData() {
