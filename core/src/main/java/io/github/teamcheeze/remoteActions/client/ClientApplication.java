@@ -48,7 +48,6 @@ public class ClientApplication {
     }
     public void createFrame(Client client) {
         layout = new GridBagLayout();
-//        File file = ((IServer) connection.getServer()).getServerFileSystem(connection).getFile("C:\\Users\\dolph\\Documents\\JmFiles\\PlumJuice\\build\\libs\\hello.txt");
 //        System.out.println("Received file");
 //        System.out.println(new LocalFile(file).readAllContents());
         JFrame frame = new JFrame("Done!");
