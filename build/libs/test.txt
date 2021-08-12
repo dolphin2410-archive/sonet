@@ -1,0 +1,6 @@
+Hello
+This
+is
+inside
+test.txt
+welcome!!

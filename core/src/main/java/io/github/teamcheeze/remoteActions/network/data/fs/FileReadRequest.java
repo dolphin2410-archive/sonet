@@ -3,13 +3,11 @@ package io.github.teamcheeze.remoteActions.network.data.fs;
 import io.github.teamcheeze.remoteActions.client.Client;
 import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.PacketData;
-import io.github.teamcheeze.remoteActions.network.data.packets.ServerFileReadPacket;
 import io.github.teamcheeze.remoteActions.server.Server;
-
-import java.io.File;
+import io.github.teamcheeze.remoteActions.util.RemoteFile;
 
 public class FileReadRequest implements PacketData {
-    private File result;
+    private RemoteFile file;
     private String requestedFilename;
     private Server server;
     private Client client;
@@ -30,16 +28,18 @@ public class FileReadRequest implements PacketData {
         return client;
     }
 
+    public void setRequestedFilename(String requestedFilename) { this.requestedFilename = requestedFilename; }
+
     public String getRequestedFilename() {
         return requestedFilename;
     }
 
-    public File getResult() {
-        return result;
+    public RemoteFile getFile() {
+        return file;
     }
 
-    public void setResult(File result) {
-        this.result = result;
+    public void setFile(RemoteFile file) {
+        this.file = file;
     }
 
 }

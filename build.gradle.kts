@@ -31,6 +31,7 @@ tasks {
         }
     }
     create<Jar>("buildClient") {
+        dependsOn(project.tasks.build)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
             attributes["Main-Class"] = "io.github.teamcheeze.remoteActions.client.ClientApplication"
@@ -40,6 +41,7 @@ tasks {
         }
     }
     create<Jar>("buildServer") {
+        dependsOn(project.tasks.build)
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest {
             attributes["Main-Class"] = "io.github.teamcheeze.remoteActions.server.ServerApplication"

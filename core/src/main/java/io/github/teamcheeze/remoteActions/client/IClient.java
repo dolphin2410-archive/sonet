@@ -2,11 +2,9 @@ package io.github.teamcheeze.remoteActions.client;
 
 import io.github.teamcheeze.remoteActions.network.*;
 import io.github.teamcheeze.remoteActions.network.client.ClientAddress;
-import io.github.teamcheeze.remoteActions.network.connection.IConnection;
 import io.github.teamcheeze.remoteActions.network.connection.IConnectionHandler;
-import io.github.teamcheeze.remoteActions.network.data.packets.ServerIdentityPacket;
-import io.github.teamcheeze.remoteActions.network.data.server.ServerIdentityRequest;
-import io.github.teamcheeze.remoteActions.server.Server;
+import io.github.teamcheeze.remoteActions.network.data.packets.HelloPacket;
+import io.github.teamcheeze.remoteActions.network.data.server.HelloRequest;
 import io.github.teamcheeze.remoteActions.util.Machine;
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
@@ -39,14 +37,7 @@ public class IClient implements Client {
      */
     @Override
     public @NotNull Connection connect(@NotNull InetAddress ip, int port) {
-        try {
-            IConnection connection = new IConnection(this, requestServerIdentity(ip, port));
-            Socket clientSocket = new Socket(ip, port);
-            connection.setServerSocket(connection.getServer().getServerSocket());
-            return connection;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return requestServerIdentity(ip, port);
     }
 
     /**
@@ -55,26 +46,25 @@ public class IClient implements Client {
      * @param port The server's port
      * @return The server instance
      */
-    private Server requestServerIdentity(InetAddress ipv4, int port) {
+    @NotNull
+    private Connection requestServerIdentity(InetAddress ipv4, int port) {
         try {
             // Say hello to server
             // Since connection is not set yet, must be sent manually
             Socket clientSocket = new Socket(ipv4, port);
             ObjectOutputStream outputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            ServerIdentityRequest request = new ServerIdentityRequest(this);
-            ServerIdentityPacket packet = new ServerIdentityPacket(request);
+            HelloRequest request = new HelloRequest(this);
+            HelloPacket packet = new HelloPacket(request);
             outputStream.writeObject(packet);
             outputStream.flush();
             ObjectInputStream inputStream = new ObjectInputStream(clientSocket.getInputStream());
-            ServerIdentityPacket returnedPacket = (ServerIdentityPacket) inputStream.readObject();
+            HelloPacket returnedPacket = (HelloPacket) inputStream.readObject();
             clientSocket.close();
-            Server newServer = returnedPacket.getData().getServer();
-            IConnectionHandler.registerServer(newServer);
-            return newServer;
+            IConnectionHandler.registerServer(returnedPacket.getData().getServer());
+            return returnedPacket.getData().getConnection();
         } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
             System.out.println("The server didn't return any instance");
-            return null;
+            throw new RuntimeException("Invalid Status. Connection Aborted.");
         }
     }
 

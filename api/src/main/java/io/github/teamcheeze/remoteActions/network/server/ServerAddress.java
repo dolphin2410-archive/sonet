@@ -7,7 +7,7 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
 
-public class ServerAddress extends Address implements Serializable {
+public class ServerAddress extends Address {
     public InetAddress ip;
     public int port;
     public ServerAddress() {  }

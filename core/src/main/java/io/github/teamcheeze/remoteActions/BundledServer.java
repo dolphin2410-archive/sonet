@@ -20,9 +20,9 @@ public class BundledServer {
         Connection connection = client.connect(server.getAddress());
         // Stuck here
         System.out.println("Connection complete");
-        File file = ((IServer) server).getServerFileSystem(connection).getFile("C:\\Users\\dolph\\Documents\\JmFiles\\PlumJuice\\build\\libs\\hello.txt");
-        System.out.println("Received file");
-        System.out.println(new LocalFile(file).readAllContents());
+//        File file = ((IServer) server).getServerFileSystem(connection).getFile("C:\\Users\\dolph\\Documents\\JmFiles\\PlumJuice\\build\\libs\\hello.txt");
+//        System.out.println("Received file");
+//        System.out.println(new LocalFile(file).readAllContents());
         JFrame frame = new JFrame("Clients");
         frame.setSize(192 * 5, 108 * 5);
         frame.setLocationRelativeTo(null);

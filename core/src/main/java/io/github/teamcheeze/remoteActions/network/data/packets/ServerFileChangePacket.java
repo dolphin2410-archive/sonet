@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class ServerFileChangePacket implements Packet<FileChangeRequest> {
     private FileChangeRequest data;
-    private Object result;
     public ServerFileChangePacket() {
 
     }
@@ -15,18 +14,8 @@ public class ServerFileChangePacket implements Packet<FileChangeRequest> {
     }
 
     @Override
-    public Object getResult() {
-        return result;
-    }
-
-    @Override
     public void updateData(Packet<FileChangeRequest> updated) {
         this.data = updated.getData();
-        this.result = updated.getResult();
-    }
-
-    private void setResult(Object result) {
-        this.result = result;
     }
 
     @Override

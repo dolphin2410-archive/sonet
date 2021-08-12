@@ -1,11 +1,12 @@
 package io.github.teamcheeze.remoteActions.network.connection;
 
 import io.github.teamcheeze.remoteActions.client.Client;
+import io.github.teamcheeze.remoteActions.network.data.packets.GoodbyePacket;
 import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.Packet;
 import io.github.teamcheeze.remoteActions.network.data.PacketListener;
-import io.github.teamcheeze.remoteActions.network.data.packets.ServerIdentityPacket;
+import io.github.teamcheeze.remoteActions.network.data.packets.HelloPacket;
 import io.github.teamcheeze.remoteActions.server.Server;
 import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
@@ -46,10 +47,8 @@ public class ServerSocketThread extends Thread {
 
     @Override
     public synchronized void start() {
-        System.out.println("The process started");
         validate(() -> {
             try {
-                System.out.println("In try");
                 ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                 // input stream is what the client requested
                 Packet<?> packet = (Packet<?>) inputStream.readObject();
@@ -59,16 +58,7 @@ public class ServerSocketThread extends Thread {
                 PacketListener.getListeners().forEach(it -> it.onReceived(object));
                 // Call the packet listeners
                 ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                if (packet instanceof ServerIdentityPacket serverIdentityPacket) {
-                    serverIdentityPacket.getData().setServer(getServer());
-                    Client newClient = serverIdentityPacket.getData().getClient();
-                    IConnectionHandler.registerClient(newClient);
-                    System.out.println("RegisteredClient");
-                } else {
-                    if (client == null) {
-                        throw new NullPointerException("The client instance cannot be null");
-                    }
-                }
+                PacketListener.handleDefault(this, packet);
                 outputStream.writeObject(packet);
                 outputStream.flush();
             } catch (IOException | ClassNotFoundException | ClassCastException e) {
@@ -81,7 +71,6 @@ public class ServerSocketThread extends Thread {
                 }
             }
         });
-        System.out.println("Process ended");
     }
 
     private boolean isValid() {

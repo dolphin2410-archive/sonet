@@ -1,16 +1,18 @@
 package io.github.teamcheeze.remoteActions.network.data.server;
 
 import io.github.teamcheeze.remoteActions.client.Client;
+import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.PacketData;
 import io.github.teamcheeze.remoteActions.server.Server;
 
-public class ServerIdentityRequest implements PacketData {
+public class HelloRequest implements PacketData {
     private Server server;
     private Client client;
-    public ServerIdentityRequest() {
+    private Connection connection;
+    public HelloRequest() {
 
     }
-    public ServerIdentityRequest(Client client) {
+    public HelloRequest(Client client) {
         this.client = client;
     }
 
@@ -20,6 +22,14 @@ public class ServerIdentityRequest implements PacketData {
 
     public void setClient(Client client) {
         this.client = client;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 
     public Server getServer() {

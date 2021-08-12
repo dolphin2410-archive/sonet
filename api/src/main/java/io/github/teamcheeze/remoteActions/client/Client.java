@@ -36,7 +36,7 @@ public interface Client extends NetworkComponent {
 
     @NotNull
     default Connection connect(int port) throws IOException {
-        return connect(Machine.localAddress.ip, port);
+        return connect(Machine.localIpAddress, port);
     }
 
     <R extends PacketData, T extends Packet<R>> T sendPacket(Connection connection, T packet);

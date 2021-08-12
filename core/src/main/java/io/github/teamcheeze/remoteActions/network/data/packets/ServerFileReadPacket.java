@@ -1,36 +1,60 @@
 package io.github.teamcheeze.remoteActions.network.data.packets;
 
+import io.github.teamcheeze.remoteActions.client.Client;
+import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.Packet;
+import io.github.teamcheeze.remoteActions.network.PacketData;
 import io.github.teamcheeze.remoteActions.network.data.fs.FileReadRequest;
+import io.github.teamcheeze.remoteActions.server.Server;
+import io.github.teamcheeze.remoteActions.util.RemoteFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ServerFileReadPacket implements Packet<FileReadRequest> {
-    private Object result;
-    private FileReadRequest data;
+public class ServerFileReadPacket implements PacketData, Packet<ServerFileReadPacket> {
+    private RemoteFile file;
+    private String requestedFilename;
+    private Server server;
+    private Client client;
     public ServerFileReadPacket() {
 
     }
-    public ServerFileReadPacket(FileReadRequest data) {
-        this.data = data;
+    public ServerFileReadPacket(Connection connection, String requestedFilename) {
+        connection.validate();
+        client.validate();
+        server.validate();
     }
     @Override
-    public Object getResult() {
-        return result;
-    }
-
-    @Override
-    public void updateData(Packet<FileReadRequest> updated) {
-        this.result = updated.getResult();
-        this.data = updated.getData();
+    public void updateData(Packet<ServerFileReadPacket> updated) {
+        this.file = updated.getData().getFile();
+        this.server = updated.getData().getServer();
+        this.client = updated.getData().getClient();
+        this.requestedFilename = updated.getData().getRequestedFilename();
     }
 
     @NotNull
     @Override
-    public FileReadRequest getData() {
-        return data;
+    public ServerFileReadPacket getData() {
+        return this;
     }
 
-    private void setResult(Object result) {
-        this.result = result;
+    public Server getServer() {
+        return server;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void setRequestedFilename(String requestedFilename) { this.requestedFilename = requestedFilename; }
+
+    public String getRequestedFilename() {
+        return requestedFilename;
+    }
+
+    public RemoteFile getFile() {
+        return file;
+    }
+
+    public void setFile(RemoteFile file) {
+        this.file = file;
     }
 }

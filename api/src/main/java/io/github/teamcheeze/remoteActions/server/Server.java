@@ -16,4 +16,6 @@ public interface Server extends NetworkComponent {
     void initialize();
 
     ServerSocket getServerSocket();
+
+
 }

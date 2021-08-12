@@ -22,6 +22,12 @@ public class IConnectionHandler {
     public static void registerServer(Server server) {
         registeredServers.add(server);
     }
+    public static boolean removeClient(Client client) {
+        return registeredClients.remove(client);
+    }
+    public static boolean removeServer(Server server) {
+        return registeredServers.remove(server);
+    }
 
     /**
      *

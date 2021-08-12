@@ -10,7 +10,6 @@ import java.io.Serializable;
  */
 public interface Packet<T extends PacketData> extends Serializable {
     @NotNull T getData();
-    Object getResult();
     void updateData(Packet<T> updated);
     default void send(Connection connection) {
         connection.getClient().sendPacket(connection, this);

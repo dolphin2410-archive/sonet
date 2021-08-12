@@ -5,7 +5,7 @@ import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.connection.IConnectionHandler;
 import io.github.teamcheeze.remoteActions.network.connection.ServerSocketThread;
-import io.github.teamcheeze.remoteActions.network.data.ServerFileSystem;
+import io.github.teamcheeze.remoteActions.server.fs.IServerFileSystem;
 import io.github.teamcheeze.remoteActions.util.Cancellable;
 import io.github.teamcheeze.remoteActions.util.Machine;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public class IServer implements Server, Cancellable {
     private final UUID id = UUID.randomUUID();
     private ServerAddress address;
     private transient ServerSocket serverSocket;
-    private boolean initialized = true;
+    private boolean initialized = false;
     private boolean debug = true;
 
     public IServer() {
@@ -59,8 +59,8 @@ public class IServer implements Server, Cancellable {
         return address;
     }
 
-    public ServerFileSystem getServerFileSystem(Connection connection) {
-        return new ServerFileSystem(connection);
+    public IServerFileSystem getServerFileSystem(Connection connection) {
+        return new IServerFileSystem(connection);
     }
 
     @Override
