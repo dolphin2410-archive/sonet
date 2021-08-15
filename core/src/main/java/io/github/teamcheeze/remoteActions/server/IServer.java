@@ -1,37 +1,33 @@
 package io.github.teamcheeze.remoteActions.server;
 
 import io.github.dolphin2410.jaw.util.async.Async;
-import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.connection.IConnectionHandler;
 import io.github.teamcheeze.remoteActions.network.connection.ServerSocketThread;
-import io.github.teamcheeze.remoteActions.server.fs.IServerFileSystem;
+import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.util.Cancellable;
 import io.github.teamcheeze.remoteActions.util.Machine;
 import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class IServer implements Server, Cancellable {
     private boolean canceled = false;
     private final UUID id = UUID.randomUUID();
-    private ServerAddress address;
-    private transient ServerSocket serverSocket;
+    private final ServerAddress address;
     private boolean initialized = false;
-    private boolean debug = true;
-
-    public IServer() {
-    }
-
-    public IServer(ServerAddress address) {
-        this.address = address;
-    }
+    private boolean valid;
+    private final List<Connection> connections = new ArrayList<>();
 
     public IServer(int port) {
+        this.valid = true;
         this.address = new ServerAddress(Machine.localIpAddress, port);
     }
 
@@ -59,31 +55,30 @@ public class IServer implements Server, Cancellable {
         return address;
     }
 
-    public IServerFileSystem getServerFileSystem(Connection connection) {
-        return new IServerFileSystem(connection);
-    }
-
     @Override
     public void initialize() {
         if (initialized) {
             throw new RuntimeException("Cannot re initialize a server.");
         }
+        ServerSocket tempServerSocket;
         try {
-            serverSocket = new ServerSocket(address.port);
+            tempServerSocket = new ServerSocket(address.port);
         } catch (IOException e) {
             try {
-                serverSocket = new ServerSocket(0);
-                debugMsg("The port has moved from " + address.port + " to " + serverSocket.getLocalPort() + " because the port was already used");
+                tempServerSocket = new ServerSocket(0);
             } catch (IOException ex) {
                 e.printStackTrace();
+                throw new RuntimeException(ex);
             }
         }
+        final ServerSocket serverSocket = tempServerSocket;
         initialized = true;
+        System.out.println("Local server hosted on port: " + getAddress().getPort() + " [ip: " + getAddress().getIp().getHostAddress() + "]");
         Async.execute(() -> {
             while (!isCanceled()) {
                 try {
                     Socket receivedSocket = serverSocket.accept();
-                    Inet4Address remoteAddress = (Inet4Address) ((InetSocketAddress) receivedSocket.getRemoteSocketAddress()).getAddress();
+                    InetAddress remoteAddress = ((InetSocketAddress) receivedSocket.getRemoteSocketAddress()).getAddress();
                     System.out.println("[Server] Connection request established on " + remoteAddress.getHostAddress() + ".");
                     new ServerSocketThread(IConnectionHandler.getClient(remoteAddress), this, serverSocket, receivedSocket).start();
                 } catch (IOException e) {
@@ -91,30 +86,31 @@ public class IServer implements Server, Cancellable {
                 }
             }
         });
-        while (!isCanceled()) {
-            String input = System.console().readLine();
-            if (input.equalsIgnoreCase("stop")) {
-                setCanceled(true);
+        Runtime.getRuntime().addShutdownHook(new Thread(()->{
+            setCanceled(true);
+            try {
+                for (Connection connection : connections) {
+                    connection.abort();
+                }
+                serverSocket.close();
+                System.out.println("Server closing safely..");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        }
-    }
-
-    private void debugMsg(Object obj) {
-        if (isDebug()) {
-            System.out.println(obj);
-        }
-    }
-
-    public boolean isDebug() {
-        return debug;
-    }
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
+        }));
     }
 
     @Override
-    public ServerSocket getServerSocket() {
-        return serverSocket;
+    public boolean isValid() {
+        return valid;
+    }
+
+    @Override
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
+    public List<Connection> getConnections() {
+        return connections;
     }
 }

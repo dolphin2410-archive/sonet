@@ -2,15 +2,17 @@ package io.github.teamcheeze.remoteActions.util;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public class RemoteFile {
-    ByteArrayInputStream inputStream;
+public class RemoteFile implements Serializable {
+    byte[] inputStream;
     String filename;
 
     public RemoteFile() {
@@ -18,7 +20,7 @@ public class RemoteFile {
     }
 
     public RemoteFile(ByteArrayInputStream outputStream, String filename) {
-        this.inputStream = outputStream;
+        this.inputStream = outputStream.readAllBytes();
         this.filename = filename;
     }
 
@@ -49,14 +51,14 @@ public class RemoteFile {
                 });
                 // Executes after looping all the files
                 // Result = byteArrayOutputStream
-                this.inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+                this.inputStream = byteArrayOutputStream.toByteArray();
                 this.filename = file.getName() + ".zip";
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
             try {
-                this.inputStream = new ByteArrayInputStream(Files.readAllBytes(file.toPath()));
+                this.inputStream = Files.readAllBytes(file.toPath());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -68,16 +70,16 @@ public class RemoteFile {
             throw new RuntimeException("Not a folder");
         }
         File file = new File(sourceFolder, filename);
-        Files.copy(inputStream, file.toPath());
+        Files.copy(new ByteArrayInputStream(inputStream), file.toPath());
         return file;
     }
     public List<String> readAllContents() {
         return new BufferedReader(
-                new InputStreamReader(inputStream, StandardCharsets.UTF_8)
+                new InputStreamReader(new ByteArrayInputStream(inputStream), StandardCharsets.UTF_8)
         ).lines().toList();
     }
 
     public ByteArrayInputStream getInputStream() {
-        return inputStream;
+        return new ByteArrayInputStream(inputStream);
     }
 }

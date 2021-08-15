@@ -1,5 +1,4 @@
-rootProject.name = "RemoteActions"
+rootProject.name = "sonet"
 include(":api")
 include(":core")
-include("api")
-include("core")
+include(":ctrl")

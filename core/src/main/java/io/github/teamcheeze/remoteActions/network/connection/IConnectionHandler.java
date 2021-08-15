@@ -7,7 +7,7 @@ import io.github.teamcheeze.remoteActions.server.Server;
 import io.github.teamcheeze.remoteActions.util.ExceptionCodes;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +24,12 @@ public class IConnectionHandler {
     }
     public static boolean removeClient(Client client) {
         return registeredClients.remove(client);
+    }
+    public static boolean removeClient(UUID id) {
+        return registeredClients.removeIf(client -> client.getId() == id);
+    }
+    public static boolean removeServer(UUID id) {
+        return registeredServers.removeIf(server -> server.getId() == id);
     }
     public static boolean removeServer(Server server) {
         return registeredServers.remove(server);
@@ -63,8 +69,16 @@ public class IConnectionHandler {
     }
 
     @Nullable
-    public static Client getClient(Inet4Address clientAddress) {
-        return getClient((client -> client.getAddress().getIp().getHostAddress().equals(clientAddress.getHostAddress())));
+    public static Client getClient(InetAddress clientAddress) {
+//        for (Client registeredClient : registeredClients) {
+//            System.out.println("<>");
+//            System.out.println(registeredClient.getAddress().getIp().getHostAddress());
+//            System.out.println(clientAddress.getHostAddress());
+//            System.out.println(registeredClient.getAddress().getIp().getHostAddress().equalsIgnoreCase(clientAddress.getHostAddress()));
+//            System.out.println("<>");
+//        }
+        return getClient(client -> client.getAddress().getIp().getHostAddress().equalsIgnoreCase(clientAddress.getHostAddress()));
+//        return getClient(client -> client.getAddress().getIp().getHostAddress().equalsIgnoreCase(clientAddress.getHostAddress()));
     }
 
     @Nullable

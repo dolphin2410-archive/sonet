@@ -1,13 +1,15 @@
 package io.github.teamcheeze.remoteActions.client;
 
-import io.github.teamcheeze.remoteActions.network.*;
+import io.github.teamcheeze.remoteActions.network.Connection;
+import io.github.teamcheeze.remoteActions.network.NetworkComponent;
+import io.github.teamcheeze.remoteActions.network.Packet;
+import io.github.teamcheeze.remoteActions.network.PacketData;
 import io.github.teamcheeze.remoteActions.network.client.ClientAddress;
 import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.util.Machine;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.util.UUID;
 
@@ -39,7 +41,7 @@ public interface Client extends NetworkComponent {
         return connect(Machine.localIpAddress, port);
     }
 
-    <R extends PacketData, T extends Packet<R>> T sendPacket(Connection connection, T packet);
+    <R extends PacketData, T extends Packet<R>> T sendPacket(T packet);
 
     /**
      * The unique client's id
@@ -53,4 +55,8 @@ public interface Client extends NetworkComponent {
      * @return The client's system ip address
      */
     @NotNull ClientAddress getAddress();
+
+    Connection getConnection();
+
+    void abort();
 }

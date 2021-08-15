@@ -1,29 +1,31 @@
 package io.github.teamcheeze.remoteActions.network.connection;
 
 import io.github.teamcheeze.remoteActions.client.Client;
-import io.github.teamcheeze.remoteActions.network.data.packets.GoodbyePacket;
-import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import io.github.teamcheeze.remoteActions.network.Connection;
 import io.github.teamcheeze.remoteActions.network.Packet;
+import io.github.teamcheeze.remoteActions.network.client.ClientAddress;
+import io.github.teamcheeze.remoteActions.network.data.GoodbyePacket;
 import io.github.teamcheeze.remoteActions.network.data.PacketListener;
-import io.github.teamcheeze.remoteActions.network.data.packets.HelloPacket;
+import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
+import io.github.teamcheeze.remoteActions.server.IServer;
 import io.github.teamcheeze.remoteActions.server.Server;
 import org.jetbrains.annotations.Nullable;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ServerSocketThread extends Thread {
     private final Client client;
     private final Server server;
-    private final Connection connection;
-    private final Socket socket;
+    private Connection connection;
     private final ServerSocket serverSocket;
-    private final ServerAddress socketClientAddress;
+    private final Socket socket;
+    private final ClientAddress socketClientAddress;
     private final ServerAddress socketServerAddress;
 
     public ServerSocketThread(@Nullable Client client, Server server, ServerSocket serverSocket, Socket socket) throws IOException {
@@ -34,12 +36,22 @@ public class ServerSocketThread extends Thread {
         this.socket = socket;
         InetSocketAddress remoteClientAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
         Inet4Address clientIpv4 = (Inet4Address)remoteClientAddress.getAddress();
-        ServerAddress clientAddress = new ServerAddress(clientIpv4, remoteClientAddress.getPort());
+        ClientAddress clientAddress = new ClientAddress(clientIpv4);
         InetSocketAddress remoteAddress = (InetSocketAddress) serverSocket.getLocalSocketAddress();
         Inet4Address serverIpv4 = (Inet4Address)remoteAddress.getAddress();
         ServerAddress serverAddress = new ServerAddress(serverIpv4, remoteAddress.getPort());
+        if (client != null) {
+            List<Connection> connections = new ArrayList<>(((IServer) server).getConnections().stream().filter(it -> it.getClient() == client).toList());
+            if (connections.size() != 1) {
+                for (Connection connection : connections) {
+                    connection.abort();
+                }
+                connections.clear();
+                throw new RuntimeException("Multiple or no client(s) sharing one connection.");
+            }
+            this.connection = connections.get(0);
+        }
         this.client = client;
-        this.connection = new IConnection(client, server);
         this.server = server;
         this.socketClientAddress = clientAddress;
         this.socketServerAddress = serverAddress;
@@ -49,26 +61,24 @@ public class ServerSocketThread extends Thread {
     public synchronized void start() {
         validate(() -> {
             try {
-                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                // input stream is what the client requested
-                Packet<?> packet = (Packet<?>) inputStream.readObject();
-                // The requested class might not be found or might not be a packet
-                Object object = packet.getData();
-                System.out.println(packet.getClass());
-                PacketListener.getListeners().forEach(it -> it.onReceived(object));
-                // Call the packet listeners
-                ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
-                PacketListener.handleDefault(this, packet);
-                outputStream.writeObject(packet);
-                outputStream.flush();
+                while (((connection == null && client == null) || (connection != null && connection.isValid())) && socket.isConnected() && !socket.isClosed()) {
+                    InputStream is = socket.getInputStream();
+                    ObjectInputStream inputStream = new ObjectInputStream(is);
+                    Packet<?> packet = (Packet<?>) inputStream.readObject();
+                    Object object = packet.getData();
+                    System.out.println("[Incoming Packet]: " + packet.getClass().getSimpleName());
+                    PacketListener.getListeners().forEach(it -> it.onReceived(object));
+                    ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+                    PacketListener.handleDefault(this, packet);
+                    outputStream.writeObject(packet);
+                    outputStream.flush();
+                    if (packet instanceof GoodbyePacket) {
+                        break;
+                    }
+                    System.out.println("[Outgoing Packet]: " + packet.getClass().getSimpleName());
+                }
             } catch (IOException | ClassNotFoundException | ClassCastException e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
         });
     }
@@ -104,6 +114,10 @@ public class ServerSocketThread extends Thread {
         return connection;
     }
 
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
+
     public Server getServer() {
         return server;
     }
@@ -112,7 +126,7 @@ public class ServerSocketThread extends Thread {
         return socket;
     }
 
-    public ServerAddress getSocketClientAddress() {
+    public ClientAddress getSocketClientAddress() {
         return socketClientAddress;
     }
 }

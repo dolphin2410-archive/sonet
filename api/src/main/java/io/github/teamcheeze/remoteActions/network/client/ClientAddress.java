@@ -1,8 +1,6 @@
 package io.github.teamcheeze.remoteActions.network.client;
 
-import io.github.teamcheeze.remoteActions.client.Client;
 import io.github.teamcheeze.remoteActions.network.Address;
-import io.github.teamcheeze.remoteActions.network.server.ServerAddress;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;

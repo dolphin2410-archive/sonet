@@ -3,7 +3,6 @@ package io.github.teamcheeze.remoteActions.network.server;
 import io.github.teamcheeze.remoteActions.network.Address;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.Objects;
 
