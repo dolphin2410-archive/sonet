@@ -3,7 +3,7 @@ plugins {
     `maven-publish`
 }
 
-group = "teamcheeze"
+group = "io.github.teamcheeze"
 version = "0.0.1-Beta"
 
 allprojects {
@@ -20,8 +20,8 @@ repositories {
 dependencies {
     configurations["shade"](project(":api"))
     configurations["shade"](project(":core"))
-    implementation(project(":api"))
-    implementation(project(":core"))
+    configurations["shade"]("org.jetbrains:annotations:20.1.0")
+    configurations["shade"]("io.github.teamcheeze:jaw:1.0.2")
 }
 
 tasks {
@@ -31,40 +31,18 @@ tasks {
             from (project.configurations["shade"].map { if (it.isDirectory) it else zipTree(it) })
         }
     }
-    create<Jar>("buildClient") {
-        dependsOn(project.tasks.build)
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        archiveFileName.set("remoteActionsClient.jar")
-        manifest {
-            attributes["Main-Class"] = "io.github.teamcheeze.remoteActions.client.ClientApplication"
-        }
-        allprojects.forEach { project ->
-            from (project.configurations["shade"].map { if (it.isDirectory) it else zipTree(it) })
-        }
-    }
-    create<Jar>("buildServer") {
-        dependsOn(project.tasks.build)
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        archiveFileName.set("remoteActionsServer.jar")
-        manifest {
-            attributes["Main-Class"] = "io.github.teamcheeze.remoteActions.server.ServerApplication"
-        }
-        allprojects.forEach { project ->
-            from (project.configurations["shade"].map { if (it.isDirectory) it else zipTree(it) })
-        }
-    }
 }
 
 publishing {
     publications {
-        create<MavenPublication>("pub") {
+        create<MavenPublication>("publication") {
             repositories {
                 mavenLocal()
             }
             pom {
-                name.set("")
-                description.set("Command dsl for paper server")
-                url.set("https://github.com/monun/kommand")
+                name.set("sonet")
+                description.set("Simple, lightweight network manager.")
+                url.set("https://github.com/dolphin2410/sonet")
 
                 licenses {
                     license {
@@ -75,19 +53,15 @@ publishing {
 
                 developers {
                     developer {
-                        id.set("monun")
-                        name.set("Monun")
-                        email.set("monun1010@gmail.com")
-                        url.set("https://github.com/monun")
-                        roles.addAll("developer")
-                        timezone.set("Asia/Seoul")
+                        name.set("dolphin2410")
+                        email.set("dolphin2410@outlook.com")
+                        url.set("https://github.com/dolphin2410")
                     }
                 }
-
                 scm {
-                    connection.set("scm:git:git://github.com/monun/tap.git")
-                    developerConnection.set("scm:git:ssh://github.com:monun/tap.git")
-                    url.set("https://github.com/monun/tap")
+                    connection.set("scm:git:git://github.com/dolphin2410/sonet.git")
+                    developerConnection.set("scm:git:ssh://github.com:dolphin2410/sonet.git")
+                    url.set("https://github.com/dolphin2410/sonet")
                 }
             }
         }
