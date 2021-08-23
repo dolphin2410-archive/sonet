@@ -19,23 +19,27 @@
 package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.Sonet;
+import io.github.teamcheeze.sonet.network.PacketRegistry;
 import io.github.teamcheeze.sonet.network.component.Server;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import io.github.teamcheeze.sonet.network.data.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
-import io.github.teamcheeze.sonet.network.util.AddressUtils;
-
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
 public class ServerApplication {
     public static void main(String[] args) {
         Server server = Sonet.createServer(44444);
-        System.out.println("Server initialized");
-        System.out.println(AddressUtils.localAddress.getHostAddress());
+        System.out.println("Server initialized!");
         SonetConnectionHandler clientHandler = new SonetConnectionHandler() {
             @Override
             public void handle(SocketChannel clientChannel) {
-                System.out.println("Someone logged in!!");
+                try {
+                    System.out.println("User with IP: " + ((InetSocketAddress) clientChannel.getRemoteAddress()).getAddress().getHostAddress() + " successfully connected.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         };
         server.addClientHandler(clientHandler);
@@ -43,11 +47,14 @@ public class ServerApplication {
             @Override
             public void handle(SonetPacket<?> packet) {
                 if (packet instanceof SamplePacket samplePacket) {
-                    System.out.println(samplePacket.getId());
+                    System.out.println("PacketId: " + PacketRegistry.getType(SamplePacket.class));
+                    System.out.println("UUID: " + samplePacket.getId());
+                    System.out.println("Name: " + samplePacket.getName());
                 }
             }
         };
         server.addPacketHandler(packetHandler);
-        server.start();
+        server.start(false);
+        System.out.println("Hello guys!!");
     }
 }

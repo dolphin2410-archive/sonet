@@ -31,6 +31,7 @@ public interface Server {
     UUID getId();
     SonetServerAddress getAddress();
     void start();
+    void start(boolean block);
     void addClientHandler(SonetConnectionHandler handler);
     void addPacketHandler(SonetPacketHandler handler);
     void removeClientHandler(SonetConnectionHandler handler);

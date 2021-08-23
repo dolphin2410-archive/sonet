@@ -27,9 +27,11 @@ import java.util.UUID;
 public class ClientApplication {
     public static void main(String[] args) {
         Client client = Sonet.createClient();
+        UUID myId = UUID.randomUUID();
         client.connect(AddressUtils.localAddress, 44444).thenRun(()->{
-            System.out.println("Connected");
-            client.sendPacket(new SamplePacket(UUID.randomUUID(), "mr2"));
+            System.out.println("Connected!");
+            System.out.println("MyId: " + myId);
+            client.sendPacket(new SamplePacket(myId, "Entity303"));
             client.abort();
         });
     }

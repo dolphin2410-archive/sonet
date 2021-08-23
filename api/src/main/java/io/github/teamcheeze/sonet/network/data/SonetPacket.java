@@ -19,15 +19,24 @@
 package io.github.teamcheeze.sonet.network.data;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public abstract class SonetPacket<T extends SonetPacket<T>> {
     public abstract ByteBuffer getData();
-    public abstract T deserialize(ByteBuffer buffer);
     public abstract ByteBuffer serialize();
-    public static <T extends SonetPacket<?>> T fromObjects(Class<T> clazz, SerializationObject obj) {
-        throw new RuntimeException("Invalid packet " + clazz.getName() + ". The class should override this method.");
+
+    public abstract void modify(ByteBuffer data);
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SonetPacket<?> that = (SonetPacket<?>) o;
+        return Objects.equals(getData(), that.getData());
     }
 
-    public abstract void setData(ByteBuffer data);
-    public static SerializationKey key = null;
+    @Override
+    public int hashCode() {
+        return Objects.hash(getData());
+    }
 }

@@ -78,7 +78,7 @@ public class SonetClient implements Client {
                     channel.write(packet.getData());
                     packet.getData().clear();
                     channel.read(packet.getData());
-                    packet.setData(packet.getData());
+                    packet.modify(packet.getData());
                     packet.getData().flip();
                 } catch (IOException e) {
                     throw new RuntimeException(e);

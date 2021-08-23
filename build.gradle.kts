@@ -1,6 +1,7 @@
 plugins {
     java
     `maven-publish`
+    signing
 }
 
 group = "io.github.teamcheeze"
@@ -26,16 +27,29 @@ dependencies {
 
 tasks {
     jar {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        allprojects.forEach { project ->
-            from (project.configurations["shade"].map { if (it.isDirectory) it else zipTree(it) })
+        subprojects.forEach { project ->
+            from(project.sourceSets["main"].output)
+            from(project.configurations["shade"].map { if (it.isDirectory) it else zipTree(it) })
         }
+    }
+    register<Jar>("sourcesJar") {
+        archiveClassifier.set("sourcesJar")
+        subprojects.forEach {
+            from(it.sourceSets["main"].allSource)
+        }
+    }
+    register<Jar>("javadocJar") {
+        archiveClassifier.set("javadocJar")
+        from(javadoc.get())
     }
 }
 
 publishing {
     publications {
         create<MavenPublication>("publication") {
+            artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
+            artifact(tasks.jar.get())
             repositories {
                 mavenLocal()
             }
@@ -66,4 +80,10 @@ publishing {
             }
         }
     }
+}
+
+signing {
+    isRequired = true
+    sign(tasks["javadocJar"],tasks["sourcesJar"], tasks.jar.get())
+    sign(publishing.publications["publication"])
 }

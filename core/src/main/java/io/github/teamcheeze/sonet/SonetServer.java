@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 
 /**
  * The new server, with optimized nio features.
+ *
  * @author dolphin2410
  */
 public class SonetServer implements Server {
@@ -50,10 +51,12 @@ public class SonetServer implements Server {
     private final SonetServerAddress address;
     private final List<SonetConnectionHandler> clientHandlers = new ArrayList<>();
     private final List<SonetPacketHandler> packetHandlers = new ArrayList<>();
+
     public SonetServer(int port) {
         this.address = new SonetServerAddress(AddressUtils.localAddress, port);
         this.valid = true;
     }
+
     @Override
     public boolean isValid() {
         return valid;
@@ -104,78 +107,87 @@ public class SonetServer implements Server {
         return address;
     }
 
+    @Override
+    public void start(boolean block) {
+        Runnable r = () -> {
+            try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+                serverChannel.bind(new InetSocketAddress(AddressUtils.localAddress, address.getPort()));
+                serverChannel.configureBlocking(false);
+                Selector selector = Selector.open();
+                serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+                while (valid) {
+                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                    selector.select();
+                    while (iterator.hasNext()) {
+                        SelectionKey key = iterator.next();
+                        iterator.remove();
+                        if (key.isAcceptable()) {
+                            ServerSocketChannel server = (ServerSocketChannel) key.channel();
+                            SocketChannel client = server.accept();
+                            client.configureBlocking(false);
+                            for (SonetConnectionHandler handler : clientHandlers) {
+                                handler.handle(client);
+                            }
+                            client.register(selector, SelectionKey.OP_READ);
+                            clients.add(client);
+                        } else if (key.isReadable()) {
+                            SocketChannel channel = (SocketChannel) key.channel();
+                            ByteBuffer header;
+                            ByteBuffer body = null;
+                            int size;
+                            byte packetType;
+                            try {
+                                // The header should contain
+                                // 4-byte varInt - length
+                                // byte - packet type
+                                // Total five bytes
+                                header = ByteBuffer.allocate(5);
+                                channel.read(header);
+                                SonetBuffer sonetBuffer = SonetBuffer.load(header);
+                                size = sonetBuffer.readInt();
+                                if (size <= 0) {
+                                    continue;
+                                }
+                                packetType = sonetBuffer.readByte();
+                                body = ByteBuffer.allocate(size);
+                                channel.read(body);
+                            } catch (IOException e) {
+                                key.cancel();
+                                clients.remove(channel);
+                                if (body != null) {
+                                    body.clear();
+                                }
+                                continue;
+                            }
+                            for (SonetPacketHandler handler : packetHandlers) {
+                                try {
+                                    handler.handle(PacketDeserializer.deserialize(packetType, body));
+                                } catch (PacketNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            channel.write(body);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        if (block) {
+            r.run();
+        } else {
+            new Thread(r).start();
+        }
+    }
+
     /**
-     * This method will be blocked util (valid = false).
+     * Execute start with the default value of true
      */
     @Override
     public void start() {
-        try(ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-            serverChannel.bind(new InetSocketAddress(AddressUtils.localAddress, address.getPort()));
-            serverChannel.configureBlocking(false);
-            Selector selector = Selector.open();
-            serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-                try {
-                    while (valid) {
-                        Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-                        selector.select();
-                        while (iterator.hasNext()) {
-                            SelectionKey key = iterator.next();
-                            iterator.remove();
-                            if (key.isAcceptable()) {
-                                ServerSocketChannel server = (ServerSocketChannel) key.channel();
-                                SocketChannel client = server.accept();
-                                client.configureBlocking(false);
-                                for (SonetConnectionHandler handler : clientHandlers) {
-                                    handler.handle(client);
-                                }
-                                client.register(selector, SelectionKey.OP_READ);
-                                clients.add(client);
-                            } else if (key.isReadable()) {
-                                SocketChannel channel = (SocketChannel) key.channel();
-                                ByteBuffer header;
-                                ByteBuffer body = null;
-                                int size;
-                                byte packetType;
-                                try {
-                                    // The header should contain
-                                    // 4-byte varInt - length
-                                    // byte - packet type
-                                    // Total five bytes
-                                    header = ByteBuffer.allocate(5);
-                                    channel.read(header);
-                                    SonetBuffer sonetBuffer = SonetBuffer.load(header);
-                                    size = sonetBuffer.readInt();
-                                    if (size <= 0) {
-                                        continue;
-                                    }
-                                    packetType = sonetBuffer.readByte();
-                                    body = ByteBuffer.allocate(size);
-                                    channel.read(body);
-                                } catch (IOException e) {
-                                    key.cancel();
-                                    clients.remove(channel);
-                                    if (body != null) {
-                                        body.clear();
-                                    }
-                                    continue;
-                                }
-                                for (SonetPacketHandler handler : packetHandlers) {
-                                    try {
-                                        handler.handle(PacketDeserializer.deserialize(packetType, body));
-                                    } catch (PacketNotFoundException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                                channel.write(body);
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        start(true);
     }
 
     public List<SocketChannel> getClients() {

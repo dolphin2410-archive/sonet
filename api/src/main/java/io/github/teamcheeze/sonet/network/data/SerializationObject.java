@@ -18,6 +18,7 @@
 
 package io.github.teamcheeze.sonet.network.data;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,5 +49,17 @@ public class SerializationObject {
             }
         }
         return true;
+    }
+
+    public ByteBuffer toBuffer(SerializationKey key) {
+        if (!matches(key)) {
+            throw new RuntimeException("Key and object mismatch");
+        }
+        SonetBuffer sb = new SonetBuffer();
+        List<SerializationKeyType> types = key.getTypes();
+        for (int i = 0; i < objects.size(); i++) {
+            sb.write(types.get(i).getType(), objects.get(i));
+        }
+        return sb.toBuffer();
     }
 }

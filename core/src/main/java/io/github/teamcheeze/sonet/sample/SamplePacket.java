@@ -19,8 +19,8 @@
 package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.network.data.*;
+
 import java.nio.ByteBuffer;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -30,6 +30,7 @@ public class SamplePacket extends SonetPacket<SamplePacket> {
     private ByteBuffer data;
     private UUID id;
     private String name;
+
     public SamplePacket(UUID uuid, String name) {
         this.id = uuid;
         this.name = name;
@@ -39,25 +40,21 @@ public class SamplePacket extends SonetPacket<SamplePacket> {
         this.data = sonetBuffer.toBuffer();
     }
 
-    public SamplePacket() {
-
-    }
-
     @Override
     public ByteBuffer getData() {
         return data;
     }
 
     @Override
-    public void setData(ByteBuffer data) {
+    public void modify(ByteBuffer data) {
         this.data = data;
         SonetBuffer sb = SonetBuffer.load(data);
         this.id = sb.readUUID();
         this.name = sb.readString();
     }
 
-    @Override
-    public SamplePacket deserialize(ByteBuffer buffer) {
+    @SonetDeserialize
+    public static SamplePacket deserialize(ByteBuffer buffer) {
         SonetBuffer sonetBuffer = SonetBuffer.load(buffer);
         UUID uuid = sonetBuffer.readUUID();
         String name = sonetBuffer.readString();
@@ -66,28 +63,11 @@ public class SamplePacket extends SonetPacket<SamplePacket> {
 
     @Override
     public ByteBuffer serialize() {
-        return null;
+        SonetBuffer sb = new SonetBuffer();
+        sb.writeUUID(this.id);
+        sb.writeString(this.name);
+        return sb.toBuffer();
     }
-
-    @SuppressWarnings("unchecked")
-    @SonetDeserialize
-    public static <T extends SonetPacket<?>> T fromObjects(Class<T> clazz, SerializationObject obj) {
-        if (clazz != SonetPacket.class) {
-            throw new RuntimeException("Class mismatch");
-        }
-        SonetBuffer buffer = new SonetBuffer();
-        if (obj.matches(key)) {
-            for (int i = 0; i < key.getTypes().size(); i++) {
-                buffer.write(key.getTypes().get(i).getType(), obj.getObjects().get(i));
-            }
-        } else {
-            throw new RuntimeException("Serialization object doesn't match the serialization key");
-        }
-        buffer.updateBuffer();
-        return (T) new SamplePacket(buffer.readUUID(), buffer.readString());
-    }
-
-    public static SerializationKey key = new SerializationKey(SerializationKeyType.UUID, SerializationKeyType.STRING);
 
     public String getName() {
         return name;
@@ -95,18 +75,5 @@ public class SamplePacket extends SonetPacket<SamplePacket> {
 
     public UUID getId() {
         return id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SamplePacket that = (SamplePacket) o;
-        return Objects.equals(data, that.data);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(data);
     }
 }
