@@ -33,25 +33,49 @@ tasks {
         }
     }
     register<Jar>("sourcesJar") {
-        archiveClassifier.set("sourcesJar")
+        archiveClassifier.set("sources")
         subprojects.forEach {
             from(it.sourceSets["main"].allSource)
         }
     }
+    register<Javadoc>("allJavadoc") {
+        source(subprojects.map { it.sourceSets["main"].allSource })
+        classpath = files(subprojects.map { it.sourceSets["main"].compileClasspath })
+    }
     register<Jar>("javadocJar") {
-        archiveClassifier.set("javadocJar")
-        from(javadoc.get())
+        archiveClassifier.set("javadoc")
+        val task = project.tasks["allJavadoc"]
+        dependsOn(task)
+        from((task as Javadoc).destinationDir)
     }
 }
 
 publishing {
     publications {
         create<MavenPublication>("publication") {
+            from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
-            artifact(tasks.jar.get())
             repositories {
                 mavenLocal()
+                maven {
+                    name = "sonatype"
+                    credentials.runCatching {
+                        val nexusUsername: String by project
+                        val nexusPassword: String by project
+                        username = nexusUsername
+                        password = nexusPassword
+                    }.onFailure {
+                        logger.warn("Failed to load nexus credentials, Check the gradle.properties")
+                    }
+                    url = uri(
+                        if (version.endsWith("-SNAPSHOT") || version.endsWith(".Beta") || version.endsWith(".beta")) {
+                            "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                        } else {
+                            "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                        }
+                    )
+                }
             }
             pom {
                 name.set("sonet")
