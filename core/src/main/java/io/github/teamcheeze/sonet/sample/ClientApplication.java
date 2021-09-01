@@ -20,19 +20,24 @@ package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.Sonet;
 import io.github.teamcheeze.sonet.network.component.Client;
+import io.github.teamcheeze.sonet.network.data.SonetPacket;
 import io.github.teamcheeze.sonet.network.util.AddressUtils;
-
 import java.util.UUID;
 
 public class ClientApplication {
     public static void main(String[] args) {
         Client client = Sonet.createClient();
+        SamplePacket.register();
         UUID myId = UUID.randomUUID();
-        client.connect(AddressUtils.localAddress, 44444).thenRun(()->{
-            System.out.println("Connected!");
-            System.out.println("MyId: " + myId);
-            client.sendPacket(new SamplePacket(myId, "Entity303"));
-            client.abort();
-        });
+        client.connect(AddressUtils.localAddress, 44444);
+        System.out.println("Connected!");
+        System.out.println("Old: " + myId);
+        System.out.println("Old: " + "OldEntity");
+        SonetPacket returned = client.sendPacket(new SamplePacket(myId, "OldEntity"));
+        if (returned instanceof SamplePacket samplePacket) {
+            System.out.println("New: " + samplePacket.getName());
+            System.out.println("New: " + samplePacket.getId());
+        }
+        client.abort();
     }
 }

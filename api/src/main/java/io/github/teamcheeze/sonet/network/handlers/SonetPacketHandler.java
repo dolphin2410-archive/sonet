@@ -21,5 +21,5 @@ package io.github.teamcheeze.sonet.network.handlers;
 import io.github.teamcheeze.sonet.network.data.SonetPacket;
 
 public abstract class SonetPacketHandler {
-    public abstract void handle(SonetPacket<?> packet);
+    public abstract void handle(SonetPacket packet);
 }

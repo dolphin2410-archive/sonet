@@ -16,10 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.annotations;
 
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
-
-public abstract class PacketSendListener {
-    public abstract void onSend(SonetPacket<?> packet);
+public @interface ForceAllocate {
+    int value();
 }

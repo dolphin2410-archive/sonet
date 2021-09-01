@@ -18,26 +18,26 @@
 
 package io.github.teamcheeze.sonet.network;
 
-import io.github.dolphin2410.jaw.reflection.MethodAccessor;
+import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
 import io.github.teamcheeze.sonet.network.data.*;
-import io.github.teamcheeze.sonet.sample.SamplePacket;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
 
 public class PacketDeserializer {
-    public static SonetPacket<?> deserialize(byte packetType, ByteBuffer body) throws PacketNotFoundException {
-        Class<? extends SonetPacket<?>> clazz = PacketRegistry.PACKET_REGISTRY.get(packetType);
-        Method[] methods = SamplePacket.class.getDeclaredMethods();
-        Stream<Method> filtered = Arrays.stream(methods).filter(it -> it.getName().equals("deserialize") && it.getParameterCount() == 1 && it.getParameterTypes()[0] == ByteBuffer.class && it.getAnnotationsByType(SonetDeserialize.class).length == 1 && Modifier.isStatic(it.getModifiers()));
-        List<Method> filteredMethods = filtered.toList();
-        if (filteredMethods.size() == 1) {
-            MethodAccessor<? extends SonetPacket<?>> accessor = new MethodAccessor<>(clazz, "deserialize");
-            return (SonetPacket<?>) accessor.invoke(body);
+    public static SonetPacket deserialize(byte packetType, ByteBuffer body) throws PacketNotFoundException {
+        Class<? extends SonetPacket> clazz = PacketRegistry.PACKET_REGISTRY.get(packetType);
+        for (Method method : clazz.getDeclaredMethods()) {
+            Annotation[] annotations = method.getAnnotationsByType(SonetDeserialize.class);
+            if (annotations.length == 0)
+                continue;
+            try {
+                return (SonetPacket) method.invoke(null, body);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
         }
-        throw new RuntimeException("The packet needs a static 'deserialize(ByteBuffer)' method annotated with @SonetDeserialize");
+        throw new RuntimeException("The packet needs a static method '@SonetDeserialize [methodName](ByteBuffer)'");
     }
 }

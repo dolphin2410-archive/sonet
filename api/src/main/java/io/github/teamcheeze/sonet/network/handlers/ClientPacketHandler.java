@@ -16,16 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.network.handlers;
 
-import io.github.dolphin2410.jaw.reflection.ConstructorAccessor;
-
-public class CoreLoader {
-    public static SonetFactory loadFactory() {
-        try {
-            return (SonetFactory) new ConstructorAccessor<>(Class.forName("io.github.teamcheeze.sonet.ISonetFactory")).newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
+public abstract class ClientPacketHandler extends SonetPacketHandler {
 }

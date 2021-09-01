@@ -26,21 +26,16 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class PacketRegistry {
-    public static Map<Byte, Class<? extends SonetPacket<?>>> PACKET_REGISTRY = new HashMap<>();
-    static {
-        PACKET_REGISTRY.put((byte) 0x00, SamplePacket.class);
+    public static Map<Byte, Class<? extends SonetPacket>> PACKET_REGISTRY = new HashMap<>();
+
+    public static void register(byte id, Class<? extends SonetPacket> packet) {
+        PACKET_REGISTRY.putIfAbsent(id, packet);
     }
 
-    public static void register(byte id, SonetPacket<?> packet) {
-        if (PACKET_REGISTRY.containsKey(id)) {
-            throw new RuntimeException("The id already exists");
-        }
-    }
-
-    public static byte getType(Class<? extends SonetPacket<?>> packetClass) {
-        Iterator<Map.Entry<Byte, Class<? extends SonetPacket<?>>>> iterator = PACKET_REGISTRY.entrySet().iterator();
+    public static byte getType(Class<? extends SonetPacket> packetClass) {
+        Iterator<Map.Entry<Byte, Class<? extends SonetPacket>>> iterator = PACKET_REGISTRY.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<Byte, Class<? extends SonetPacket<?>>> entry = iterator.next();
+            Map.Entry<Byte, Class<? extends SonetPacket>> entry = iterator.next();
             if (entry.getKey() == null) {
                 iterator.remove();
             }
@@ -50,8 +45,8 @@ public class PacketRegistry {
         }
         throw new RuntimeException("Unregistered packet");
     }
-    public static Class<? extends SonetPacket<?>> getClass(byte type) {
-        Class<? extends SonetPacket<?>> clazz = PACKET_REGISTRY.get(type);
+    public static Class<? extends SonetPacket> getClass(byte type) {
+        Class<? extends SonetPacket> clazz = PACKET_REGISTRY.get(type);
         if (clazz == null)
             throw new RuntimeException("Unregistered packet");
         else

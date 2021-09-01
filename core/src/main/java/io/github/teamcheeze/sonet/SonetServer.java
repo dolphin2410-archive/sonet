@@ -18,11 +18,14 @@
 
 package io.github.teamcheeze.sonet;
 
+import io.github.dolphin2410.jaw.reflection.FieldAccessor;
+import io.github.dolphin2410.jaw.reflection.ReflectionException;
 import io.github.teamcheeze.sonet.network.*;
 import io.github.teamcheeze.sonet.network.component.Server;
 import io.github.teamcheeze.sonet.network.data.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
-import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
 import io.github.teamcheeze.sonet.network.util.AddressUtils;
 import io.github.teamcheeze.sonet.network.util.SonetServerAddress;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
  * The new server, with optimized nio features.
@@ -50,7 +52,7 @@ public class SonetServer implements Server {
     private final UUID id = UUID.randomUUID();
     private final SonetServerAddress address;
     private final List<SonetConnectionHandler> clientHandlers = new ArrayList<>();
-    private final List<SonetPacketHandler> packetHandlers = new ArrayList<>();
+    private final List<ServerPacketHandler> packetHandlers = new ArrayList<>();
 
     public SonetServer(int port) {
         this.address = new SonetServerAddress(AddressUtils.localAddress, port);
@@ -73,7 +75,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public void addPacketHandler(SonetPacketHandler handler) {
+    public void addPacketHandler(ServerPacketHandler handler) {
         packetHandlers.add(handler);
     }
 
@@ -83,7 +85,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public void removePacketHandler(SonetPacketHandler handler) {
+    public void removePacketHandler(ServerPacketHandler handler) {
         packetHandlers.remove(handler);
     }
 
@@ -93,7 +95,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public List<SonetPacketHandler> getPacketHandlers() {
+    public List<ServerPacketHandler> getPacketHandlers() {
         return packetHandlers;
     }
 
@@ -137,10 +139,6 @@ public class SonetServer implements Server {
                             int size;
                             byte packetType;
                             try {
-                                // The header should contain
-                                // 4-byte varInt - length
-                                // byte - packet type
-                                // Total five bytes
                                 header = ByteBuffer.allocate(5);
                                 channel.read(header);
                                 SonetBuffer sonetBuffer = SonetBuffer.load(header);
@@ -159,14 +157,31 @@ public class SonetServer implements Server {
                                 }
                                 continue;
                             }
-                            for (SonetPacketHandler handler : packetHandlers) {
-                                try {
-                                    handler.handle(PacketDeserializer.deserialize(packetType, body));
-                                } catch (PacketNotFoundException e) {
-                                    e.printStackTrace();
-                                }
+                            SonetPacket packet = null;
+                            SonetPacket received;
+                            try {
+                                received = PacketDeserializer.deserialize(packetType, body);
+                            } catch (PacketNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
-                            channel.write(body);
+                            for (ServerPacketHandler handler : packetHandlers) {
+                                    handler.handle(received);
+                                    if (handler.packetSent) {
+                                        try {
+                                            packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();
+                                        } catch (ReflectionException e) {
+                                            e.raw.printStackTrace();
+                                        }
+                                        break;
+                                    }
+                            }
+                            SonetBuffer toSend = SonetBuffer.load((packet == null) ? received.serialize() : packet.serialize());
+                            SonetBuffer sonetHeader = new SonetBuffer();
+                            sonetHeader.writeInt(toSend.toBuffer().capacity());
+                            sonetHeader.writeByte(packetType);
+                            sonetHeader.updateBuffer();
+                            channel.write(sonetHeader.toBuffer());
+                            channel.write(toSend.toBuffer());
                         }
                     }
                 }
@@ -190,11 +205,8 @@ public class SonetServer implements Server {
         start(true);
     }
 
+    @Override
     public List<SocketChannel> getClients() {
         return clients;
-    }
-
-    public void handleClients(Consumer<List<SocketChannel>> consumer) {
-        consumer.accept(clients);
     }
 }

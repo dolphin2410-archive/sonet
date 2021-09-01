@@ -21,13 +21,7 @@ package io.github.teamcheeze.sonet.network.util;
 import io.github.teamcheeze.sonet.network.component.Client;
 import io.github.teamcheeze.sonet.network.component.Server;
 
-public abstract class SonetFactory {
-    /**
-     * Cannot create an instance of this class. Never, ever hack it with reflection
-     */
-    public SonetFactory() {
-
-    }
-    public abstract Client createClient();
-    public abstract Server createServer(int port);
+public interface SonetFactory {
+    Client createClient();
+    Server createServer(int port);
 }

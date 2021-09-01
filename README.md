@@ -1,10 +1,10 @@
-# Sonet
+# Sonet v0.0.1-RC
 #### A simple implementation of a packet-exchanging lightweight tcp socket
 
 ### Examples
-- [ClientExample](https://github.com/dolphin2410/sonet/tree/master/core/src/main/java/io/github/teamcheeze/sonet/sample/ClientApplication.java)
-- [ServerExample](https://github.com/dolphin2410/sonet/tree/master/core/src/main/java/io/github/teamcheeze/sonet/sample/ServerApplication.java)
-- [SamplePacket](https://github.com/dolphin2410/sonet/tree/master/core/src/main/java/io/github/teamcheeze/sonet/sample/SamplePacket.java)
+- [ClientExample](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/ClientApplication.java)
+- [ServerExample](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/ServerApplication.java)
+- [SamplePacket](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/SamplePacket.java)
 
 ## TODOs
 - C̶r̶e̶a̶t̶e̶ ̶a̶ ̶w̶a̶y̶ ̶f̶o̶r̶ ̶t̶h̶e̶ ̶s̶e̶r̶v̶e̶r̶ ̶t̶o̶ ̶c̶o̶m̶m̶u̶n̶i̶c̶a̶t̶e̶ ̶t̶o̶ ̶t̶h̶e̶ ̶c̶l̶i̶e̶n̶t̶ ̶a̶t̶ ̶a̶n̶y̶ ̶t̶i̶m̶e̶
@@ -35,3 +35,10 @@
 - 2021-08-23 Better PacketDeserializing
 - 2021-08-23 Enhanced abstract SonetPacket class
 - 2021-08-23 Added use for annotation @SonetDeserialize
+- 2021-08-31 Created a selector for the client
+- 2021-08-31 Any method name allowed for the packet with @SonetDeserialize
+- 2021-08-31 Auto infer the type of buffer element
+- 2021-08-31 AbstractClass SonetPacket -> Interface SonetPacket
+- 2021-08-31 Created @SonetData annotation. If attached to a field in a SonetPacket class, SonetPacket automatically searches for the field and serialize it.
+- 2021-09-01 Fixed a major bug related to SonetBuffer. It was due to wrong memory allocation
+- 2021-09-01 Removed all debug statements. v0.0.1-Beta -> v0.0.1-RC

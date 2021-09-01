@@ -21,40 +21,43 @@ package io.github.teamcheeze.sonet.sample;
 import io.github.teamcheeze.sonet.Sonet;
 import io.github.teamcheeze.sonet.network.PacketRegistry;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import io.github.teamcheeze.sonet.network.data.SonetPacket;
-import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
+import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
+import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
+import java.util.UUID;
 
 public class ServerApplication {
     public static void main(String[] args) {
         Server server = Sonet.createServer(44444);
         System.out.println("Server initialized!");
-        SonetConnectionHandler clientHandler = new SonetConnectionHandler() {
-            @Override
-            public void handle(SocketChannel clientChannel) {
-                try {
-                    System.out.println("User with IP: " + ((InetSocketAddress) clientChannel.getRemoteAddress()).getAddress().getHostAddress() + " successfully connected.");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        SamplePacket.register();
+        SonetConnectionHandler clientHandler = clientChannel -> {
+            try {
+                System.out.println("User with IP: " + ((InetSocketAddress) clientChannel.getRemoteAddress()).getAddress().getHostAddress() + " successfully connected.");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         };
         server.addClientHandler(clientHandler);
-        SonetPacketHandler packetHandler = new SonetPacketHandler() {
+        ServerPacketHandler packetHandler = new ServerPacketHandler() {
             @Override
-            public void handle(SonetPacket<?> packet) {
+            public void handle(SonetPacket packet) {
                 if (packet instanceof SamplePacket samplePacket) {
                     System.out.println("PacketId: " + PacketRegistry.getType(SamplePacket.class));
-                    System.out.println("UUID: " + samplePacket.getId());
-                    System.out.println("Name: " + samplePacket.getName());
+                    System.out.println("Before UUID: " + samplePacket.getId());
+                    System.out.println("Before Name: " + samplePacket.getName());
+                    samplePacket.setName("TheNewestModernEntity");
+                    samplePacket.setId(UUID.randomUUID());
+                    System.out.println("New Name: " + samplePacket.getName());
+                    System.out.println("New UUID: " + samplePacket.getId());
+                    send(samplePacket);
                 }
             }
         };
         server.addPacketHandler(packetHandler);
         server.start(false);
-        System.out.println("Hello guys!!");
+        System.out.println("Will it block?");
     }
 }

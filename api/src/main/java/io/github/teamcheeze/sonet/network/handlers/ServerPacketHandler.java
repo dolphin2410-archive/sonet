@@ -16,15 +16,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network;
+package io.github.teamcheeze.sonet.network.handlers;
 
 import io.github.teamcheeze.sonet.network.data.SonetPacket;
 
-import java.nio.ByteBuffer;
-
-public class PacketSerializer {
-    public static byte[] serializePacket(SonetPacket<?> packet) {
-        ByteBuffer buffer = packet.getData();
-        return buffer.array();
+public abstract class ServerPacketHandler extends SonetPacketHandler {
+    public boolean packetSent = false;
+    private SonetPacket packet = null;
+    protected void send(SonetPacket packet) {
+        if (!packetSent) {
+            packetSent = true;
+            this.packet = packet;
+        }
+    }
+    private SonetPacket getPacket() {
+        return packet;
     }
 }

@@ -18,24 +18,103 @@
 
 package io.github.teamcheeze.sonet.network.component;
 
+import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
-import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
 import io.github.teamcheeze.sonet.network.util.SonetServerAddress;
 
+import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * The sonet server interface. Inherit this class for a custom server
+ */
 public interface Server {
+    /**
+     * Checks if the server is valid and running. Once set false, the server loop will cancel.
+     *
+     * @return validity
+     */
     boolean isValid();
+
+    /**
+     * Sets whether the server is valid or not. Cannot set to true once set to false
+     *
+     * @param valid validity
+     */
     void setValid(boolean valid);
+
+    /**
+     * An id to identify the server
+     *
+     * @return Id
+     */
     UUID getId();
+
+    /**
+     * Gets the server's physical address, and the current bound port
+     *
+     * @return server's address
+     */
     SonetServerAddress getAddress();
+
+    /**
+     * Starts the server loop. Blocks by default
+     */
     void start();
+
+    /**
+     * Starts the server loop by either blocking or asynchronously
+     *
+     * @param block Whether to block or not
+     */
     void start(boolean block);
+
+    /**
+     * Add a client connection handler
+     *
+     * @param handler connectionHandler
+     */
     void addClientHandler(SonetConnectionHandler handler);
-    void addPacketHandler(SonetPacketHandler handler);
+
+    /**
+     * Adds a packet input handler. Activates once the packet is recieved
+     *
+     * @param handler packetHandler
+     */
+    void addPacketHandler(ServerPacketHandler handler);
+
+    /**
+     * Removes a client connection handler
+     *
+     * @param handler connectionHandler
+     */
     void removeClientHandler(SonetConnectionHandler handler);
-    void removePacketHandler(SonetPacketHandler handler);
+
+    /**
+     * Removes a packet input handler
+     *
+     * @param handler packetHandler
+     */
+    void removePacketHandler(ServerPacketHandler handler);
+
+    /**
+     * Gets all client handlers
+     *
+     * @return client handlers
+     */
     List<SonetConnectionHandler> getClientHandlers();
-    List<SonetPacketHandler> getPacketHandlers();
+
+    /**
+     * Gets all packet handlers
+     *
+     * @return packet handlers
+     */
+    List<ServerPacketHandler> getPacketHandlers();
+
+    /**
+     * Gets list of clients
+     * @return list of clients
+     */
+    List<SocketChannel> getClients();
 }

@@ -18,25 +18,42 @@
 
 package io.github.teamcheeze.sonet.network.data;
 
+import io.github.dolphin2410.jaw.util.collection.Pair;
+import io.github.teamcheeze.sonet.annotations.SonetData;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-public abstract class SonetPacket<T extends SonetPacket<T>> {
-    public abstract ByteBuffer getData();
-    public abstract ByteBuffer serialize();
+/**
+ * An abstract sonetPacket
+ */
+public interface SonetPacket {
+    default ByteBuffer serialize() {
+        SonetBuffer buffer = new SonetBuffer();
+        List<Pair<Integer, Object>> l = new ArrayList<>();
+        for (Field declaredField : getClass().getDeclaredFields()) {
+            Annotation[] sonetData = declaredField.getAnnotationsByType(SonetData.class);
+            // TODO work on force allocating a desired byte
+            if (sonetData.length == 0)
+                continue;
+            int order = ((SonetData) sonetData[0]).value();
+            try {
+                // Infer the type automatically
+                declaredField.setAccessible(true);
+                l.add(Pair.of(order, declaredField.get(this)));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
 
-    public abstract void modify(ByteBuffer data);
+        l.sort(Comparator.comparing(Pair::getFirst));
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SonetPacket<?> that = (SonetPacket<?>) o;
-        return Objects.equals(getData(), that.getData());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getData());
+        for (Pair<Integer, Object> iop : l) {
+            buffer.write((byte) -0x01, iop.getSecond());
+        }
+        return buffer.toBuffer();
     }
 }

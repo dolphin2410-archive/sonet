@@ -16,16 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.annotations;
 
-import io.github.dolphin2410.jaw.reflection.ConstructorAccessor;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-public class CoreLoader {
-    public static SonetFactory loadFactory() {
-        try {
-            return (SonetFactory) new ConstructorAccessor<>(Class.forName("io.github.teamcheeze.sonet.ISonetFactory")).newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
+@Retention(RetentionPolicy.RUNTIME)
+public @interface SonetData {
+    int value() default -1;
 }

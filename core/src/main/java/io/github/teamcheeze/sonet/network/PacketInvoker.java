@@ -20,6 +20,8 @@ package io.github.teamcheeze.sonet.network;
 
 import io.github.teamcheeze.sonet.network.data.SonetPacket;
 
-public abstract class PacketInvoker {
-    public abstract void invoke(SonetPacket<?> packet);
+import java.util.concurrent.CompletableFuture;
+
+public interface PacketInvoker {
+    CompletableFuture<SonetPacket> invoke(SonetPacket packet);
 }

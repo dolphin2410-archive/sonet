@@ -18,17 +18,19 @@
 
 package io.github.teamcheeze.sonet.network.data;
 
+import io.github.dolphin2410.jaw.util.collection.Pair;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
-public class SonetBuffer {
+public final class SonetBuffer {
     private ByteBuffer buffer;
     private final ByteArrayOutputStream byteArrayOutputStream;
     private final DataOutputStream dataOutputStream;
 
     public SonetBuffer() {
-        this(new byte[]{});
+        this(new byte[0]);
     }
 
     public SonetBuffer(byte[] data) {
@@ -41,10 +43,10 @@ public class SonetBuffer {
         }
         this.dataOutputStream = new DataOutputStream(this.byteArrayOutputStream);
         this.buffer = toBuffer();
-
+        this.buffer.position(0);
     }
 
-    public static SonetBuffer load(ByteBuffer buffer) {
+    public static SonetBuffer load(final ByteBuffer buffer) {
         return new SonetBuffer(buffer.array());
     }
 
@@ -52,11 +54,15 @@ public class SonetBuffer {
         buffer = toBuffer();
     }
 
+    public ByteBuffer getBuffer() {
+        return buffer;
+    }
+
     public byte[] readRaw() {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public void writeRaw(byte[] data) {
+    public void writeRaw(final byte[] data) {
         try {
             byteArrayOutputStream.write(data);
             byteArrayOutputStream.flush();
@@ -65,7 +71,24 @@ public class SonetBuffer {
         }
     }
 
-    public Object read(byte type) {
+    public void writeItem(final SonetBufferItem item) {
+        writeBytes(item.getTypesArray());
+        for (Pair<BufferItemType, Object> pair : item.items) {
+            write(pair.getFirst().getType(), pair);
+        }
+    }
+
+    public SonetBufferItem readItem() {
+        SonetBufferItem item = new SonetBufferItem();
+        byte[] types = readBytes();
+        for (byte type : types) {
+            Object obj = read(type);
+            item.set(BufferItemType.from(type), obj);
+        }
+        return item;
+    }
+
+    public Object read(final byte type) {
         return switch (type) {
             case 0x00 -> readLong();
             case 0x01 -> readLongs();
@@ -86,8 +109,13 @@ public class SonetBuffer {
         };
     }
 
-    public void write(byte type, Object object) {
+    private void write(Object object) {
+        write(BufferItemType.from(object.getClass()).getType(), object);
+    }
+
+    public void write(final byte type, final Object object) {
         switch (type) {
+            case -0x01 -> write(object);
             case 0x00 -> writeLong((long) object);
             case 0x01 -> writeLongs((long[]) object);
             case 0x02 -> writeInt((int) object);
@@ -99,7 +127,7 @@ public class SonetBuffer {
             case 0x08 -> writeFloat((float) object);
             case 0x09 -> writeFloats((float[]) object);
             case 0x0a -> writeChar((char) object);
-            case 0x0b -> writeString(object.toString());
+            case 0x0b -> writeString((String) object);
             case 0x0c -> writeUUID((UUID) object);
             case 0x0d -> writeDouble((double) object);
             case 0x0e -> writeDoubles((double[]) object);
@@ -120,7 +148,7 @@ public class SonetBuffer {
         return buffer.getChar();
     }
 
-    public void writeChar(char c) {
+    public void writeChar(final char c) {
         try {
             dataOutputStream.writeChar(c);
             dataOutputStream.flush();
@@ -133,7 +161,7 @@ public class SonetBuffer {
         return buffer.getShort();
     }
 
-    public void writeShort(short s) {
+    public void writeShort(final short s) {
         try {
             dataOutputStream.writeShort(s);
             dataOutputStream.flush();
@@ -151,7 +179,7 @@ public class SonetBuffer {
         return shorts;
     }
 
-    public void writeShorts(short[] shorts) {
+    public void writeShorts(final short[] shorts) {
         writeInt(shorts.length);
         for (short aShort : shorts) {
             writeShort(aShort);
@@ -162,7 +190,7 @@ public class SonetBuffer {
         return buffer.getFloat();
     }
 
-    public void writeFloat(float f) {
+    public void writeFloat(final float f) {
         try {
             dataOutputStream.writeFloat(f);
             dataOutputStream.flush();
@@ -180,14 +208,14 @@ public class SonetBuffer {
         return floats;
     }
 
-    public void writeFloats(float[] floats) {
+    public void writeFloats(final float[] floats) {
         writeInt(floats.length);
         for (float aFloat : floats) {
             writeFloat(aFloat);
         }
     }
 
-    public void writeString(String string) {
+    public void writeString(final String string) {
         writeInt(string.length());
         for (char c : string.toCharArray()) {
             writeChar(c);
@@ -200,7 +228,7 @@ public class SonetBuffer {
         return new UUID(most, least);
     }
 
-    public void writeUUID(UUID uuid) {
+    public void writeUUID(final UUID uuid) {
         writeLong(uuid.getMostSignificantBits());
         writeLong(uuid.getLeastSignificantBits());
     }
@@ -209,7 +237,7 @@ public class SonetBuffer {
         return buffer.getInt();
     }
 
-    public void writeInt(int i) {
+    public void writeInt(final int i) {
         try {
             dataOutputStream.writeInt(i);
             dataOutputStream.flush();
@@ -227,7 +255,7 @@ public class SonetBuffer {
         return ints;
     }
 
-    public void writeInts(int[] ints) {
+    public void writeInts(final int[] ints) {
         writeInt(ints.length);
         for (int anInt : ints) {
             writeInt(anInt);
@@ -235,10 +263,11 @@ public class SonetBuffer {
     }
 
     public long readLong() {
-        return buffer.getLong();
+        long l = buffer.getLong();
+        return l;
     }
 
-    public void writeLong(long l) {
+    public void writeLong(final long l) {
         try {
             dataOutputStream.writeLong(l);
             dataOutputStream.flush();
@@ -251,7 +280,7 @@ public class SonetBuffer {
         return buffer.getDouble();
     }
 
-    public void writeDouble(double d) {
+    public void writeDouble(final double d) {
         try {
             dataOutputStream.writeDouble(d);
             dataOutputStream.flush();
@@ -260,7 +289,7 @@ public class SonetBuffer {
         }
     }
 
-    public void writeDoubles(double[] doubles) {
+    public void writeDoubles(final double[] doubles) {
         writeInt(doubles.length);
         for (double aDouble : doubles) {
             writeDouble(aDouble);
@@ -285,14 +314,14 @@ public class SonetBuffer {
         return longs;
     }
 
-    public void writeLongs(long[] longs) {
+    public void writeLongs(final long[] longs) {
         writeInt(longs.length);
         for (long aLong : longs) {
             writeLong(aLong);
         }
     }
 
-    public void writeByte(byte b) {
+    public void writeByte(final byte b) {
         try {
             dataOutputStream.writeByte(b);
             dataOutputStream.flush();
@@ -305,7 +334,7 @@ public class SonetBuffer {
         return buffer.get();
     }
 
-    public void writeBytes(byte[] bytes) {
+    public void writeBytes(final byte[] bytes) {
         writeInt(bytes.length);
         for (byte aByte : bytes) {
             writeByte(aByte);

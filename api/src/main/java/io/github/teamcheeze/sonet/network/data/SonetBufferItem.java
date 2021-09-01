@@ -18,26 +18,28 @@
 
 package io.github.teamcheeze.sonet.network.data;
 
+import io.github.dolphin2410.jaw.util.collection.Pair;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class SerializationKey {
-    private final List<SerializationKeyType> types = new ArrayList<>();
-
-    public SerializationKey() {
-
+public class SonetBufferItem {
+    List<Pair<BufferItemType, Object>> items = new ArrayList<>();
+    public SonetBufferItem() {
+    }
+    public int getLength() {
+        return items.size();
     }
 
-    public SerializationKey(SerializationKeyType... types) {
-        this.types.addAll(Arrays.asList(types));
-    }
-
-    public void addType(SerializationKeyType type) {
-        types.add(type);
-    }
-
-    public List<SerializationKeyType> getTypes() {
+    public byte[] getTypesArray() {
+        byte[] types = new byte[getLength()];
+        for (int i = 0; i < getLength(); i++) {
+            types[i] = items.get(i).getFirst().getType();
+        }
         return types;
+    }
+
+    public void set(BufferItemType type, Object item) {
+        if (type.getClazz().isInstance(item))
+            items.add(Pair.of(type, item));
     }
 }

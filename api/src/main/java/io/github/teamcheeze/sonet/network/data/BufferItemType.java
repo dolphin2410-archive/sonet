@@ -18,7 +18,7 @@
 
 package io.github.teamcheeze.sonet.network.data;
 
-public enum SerializationKeyType {
+public enum BufferItemType {
     LONG((byte) 0x00, long.class),
     LONG_ARRAY((byte) 0x01, long[].class),
     INT((byte) 0x02, int.class),
@@ -36,10 +36,47 @@ public enum SerializationKeyType {
     DOUBLES((byte) 0x0e, double[].class);
     private final byte type;
     private final Class<?> clazz;
-    SerializationKeyType(byte type, Class<?> clazz) {
+    BufferItemType(final byte type, final Class<?> clazz) {
         this.type = type;
         this.clazz = clazz;
     }
+
+    public static BufferItemType fromSafe(byte type) {
+        for (BufferItemType value : values()) {
+            if (value.getType() == type) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    public static BufferItemType fromSafe(Class<?> clazz) {
+        for (BufferItemType value : values()) {
+            if (value.getClazz() == clazz) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    public static BufferItemType from(byte type) {
+        for (BufferItemType value : values()) {
+            if (value.getType() == type) {
+                return value;
+            }
+        }
+        throw new RuntimeException("No item found");
+    }
+
+    public static BufferItemType from(Class<?> clazz) {
+        for (BufferItemType value : values()) {
+            if (value.getClazz() == clazz) {
+                return value;
+            }
+        }
+        throw new RuntimeException("No item found");
+    }
+
     public byte getType() {
         return type;
     }

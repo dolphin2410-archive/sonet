@@ -16,13 +16,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.data;
+package io.github.teamcheeze.sonet.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotate this on the 'static deserialize(ByteBuffer)' method in your SonetPacket
+ * @author dolphin2410
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SonetDeserialize {

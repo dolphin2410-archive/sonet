@@ -18,6 +18,10 @@
 
 package io.github.teamcheeze.sonet.sample;
 
+import io.github.teamcheeze.sonet.annotations.ForceAllocate;
+import io.github.teamcheeze.sonet.annotations.SonetData;
+import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
+import io.github.teamcheeze.sonet.network.PacketRegistry;
 import io.github.teamcheeze.sonet.network.data.*;
 
 import java.nio.ByteBuffer;
@@ -26,51 +30,41 @@ import java.util.UUID;
 /**
  * A packet requires an empty constructor. This constructor is used to create a new instance of a packet after deserialization
  */
-public class SamplePacket extends SonetPacket<SamplePacket> {
-    private ByteBuffer data;
+public class SamplePacket implements SonetPacket {
+    @SonetData
     private UUID id;
+
+    @SonetData
     private String name;
 
     public SamplePacket(UUID uuid, String name) {
         this.id = uuid;
         this.name = name;
-        SonetBuffer sonetBuffer = new SonetBuffer();
-        sonetBuffer.writeUUID(uuid);
-        sonetBuffer.writeString(name);
-        this.data = sonetBuffer.toBuffer();
     }
 
-    @Override
-    public ByteBuffer getData() {
-        return data;
-    }
-
-    @Override
-    public void modify(ByteBuffer data) {
-        this.data = data;
-        SonetBuffer sb = SonetBuffer.load(data);
-        this.id = sb.readUUID();
-        this.name = sb.readString();
+    public static void register() {
+        PacketRegistry.register((byte) 0x00, SamplePacket.class);
     }
 
     @SonetDeserialize
     public static SamplePacket deserialize(ByteBuffer buffer) {
         SonetBuffer sonetBuffer = SonetBuffer.load(buffer);
+        sonetBuffer.updateBuffer();
         UUID uuid = sonetBuffer.readUUID();
         String name = sonetBuffer.readString();
         return new SamplePacket(uuid, name);
     }
 
-    @Override
-    public ByteBuffer serialize() {
-        SonetBuffer sb = new SonetBuffer();
-        sb.writeUUID(this.id);
-        sb.writeString(this.name);
-        return sb.toBuffer();
-    }
-
     public String getName() {
         return name;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public UUID getId() {

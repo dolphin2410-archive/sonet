@@ -20,6 +20,6 @@ package io.github.teamcheeze.sonet.network;
 
 public class PacketNotFoundException extends Exception {
     public PacketNotFoundException(byte packetId) {
-        super("PacketID: " + packetId + ", was not registered.");
+        super("Packet with ID: " + packetId + ", was not registered.");
     }
 }

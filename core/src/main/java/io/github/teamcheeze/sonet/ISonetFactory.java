@@ -22,10 +22,7 @@ import io.github.teamcheeze.sonet.network.component.Client;
 import io.github.teamcheeze.sonet.network.component.Server;
 import io.github.teamcheeze.sonet.network.util.SonetFactory;
 
-public class ISonetFactory extends SonetFactory {
-    public ISonetFactory() {
-        super();
-    }
+public class ISonetFactory implements SonetFactory {
     @Override
     public Client createClient() {
         return new SonetClient();
