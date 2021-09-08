@@ -23,7 +23,7 @@ import io.github.teamcheeze.sonet.network.component.Server;
 import io.github.teamcheeze.sonet.network.util.loader.CoreLoader;
 import io.github.teamcheeze.sonet.network.util.loader.SonetFactory;
 
-public class Sonet {
+public final class Sonet {
     private static SonetFactory factory = null;
 
     static {

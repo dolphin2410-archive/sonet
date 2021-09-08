@@ -17,28 +17,4 @@
 - A̶n̶ ̶a̶u̶t̶o̶m̶a̶t̶i̶c̶ ̶w̶a̶y̶ ̶f̶o̶r̶ ̶t̶h̶e̶ ̶S̶o̶n̶e̶t̶B̶u̶f̶f̶e̶r̶ ̶t̶o̶ ̶c̶o̶n̶v̶e̶r̶t̶ ̶B̶y̶t̶e̶A̶r̶r̶a̶y̶O̶u̶t̶p̶u̶t̶S̶t̶r̶e̶a̶m̶ ̶t̶o̶ ̶B̶y̶t̶e̶B̶u̶f̶f̶e̶r̶
 - B̶e̶t̶t̶e̶r̶ ̶N̶I̶O̶ ̶S̶o̶c̶k̶e̶t̶C̶h̶a̶n̶n̶e̶l̶ ̶l̶o̶g̶i̶c̶
 
-## Change logs
-- 2021-08-06 Started project as RemoteActions
-- 2021-08-09 Created git repository
-- 2021-08-10 Created most of the base features
-- 2021-08-13 Updated core features
-- 2021-08-15 Updated the main logic of connection
-- 2021-08-15 Renamed project to Sonet
-- 2021-08-16 Added SonetBuffer
-- 2021-08-17 Usage of nio and buffer
-- 2021-08-17 Rename all source code name to RemoteActions -> Sonet
-- 2021-08-18 Update all package trees
-- 2021-08-18 GNU License version 3
-- 2021-08-18 Update README
-- 2021-08-18 Simpler and faster deserialization
-- 2021-08-23 Added async support for server
-- 2021-08-23 Better PacketDeserializing
-- 2021-08-23 Enhanced abstract SonetPacket class
-- 2021-08-23 Added use for annotation @SonetDeserialize
-- 2021-08-31 Created a selector for the client
-- 2021-08-31 Any method name allowed for the packet with @SonetDeserialize
-- 2021-08-31 Auto infer the type of buffer element
-- 2021-08-31 AbstractClass SonetPacket -> Interface SonetPacket
-- 2021-08-31 Created @SonetData annotation. If attached to a field in a SonetPacket class, SonetPacket automatically searches for the field and serialize it.
-- 2021-09-01 Fixed a major bug related to SonetBuffer. It was due to wrong memory allocation
-- 2021-09-01 Removed all debug statements. v0.0.1-Beta -> v0.0.1-RC
+## [ChangeLogs](./CHANGELOGS.md)
