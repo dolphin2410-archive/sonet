@@ -18,10 +18,9 @@
 
 package io.github.teamcheeze.sonet.network.component;
 
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
-import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
-import io.github.teamcheeze.sonet.network.util.SonetClientAddress;
+import io.github.teamcheeze.sonet.network.util.net.SonetClientAddress;
 import org.jetbrains.annotations.NotNull;
 import java.net.InetAddress;
 import java.util.List;
@@ -85,5 +84,7 @@ public interface Client {
     void removePacketHandler(ClientPacketHandler handler);
 
     List<ClientPacketHandler> getPacketHandlers();
+
+    byte[] sendRawBytes();
 
 }

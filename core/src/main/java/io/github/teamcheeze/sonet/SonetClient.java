@@ -20,11 +20,14 @@ package io.github.teamcheeze.sonet;
 
 import io.github.teamcheeze.sonet.network.*;
 import io.github.teamcheeze.sonet.network.component.Client;
-import io.github.teamcheeze.sonet.network.data.SonetBuffer;
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
+import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
-import io.github.teamcheeze.sonet.network.util.AddressUtils;
-import io.github.teamcheeze.sonet.network.util.SonetClientAddress;
+import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
+import io.github.teamcheeze.sonet.network.util.SonetBoolean;
+import io.github.teamcheeze.sonet.network.util.net.SonetClientAddress;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -34,13 +37,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SonetClient implements Client {
     private final SonetClientAddress address;
@@ -48,6 +50,7 @@ public class SonetClient implements Client {
     private boolean valid;
     private PacketInvoker invoker = null;
     private SocketChannel channel = null;
+    private final AtomicReference<Selector> selector = new AtomicReference<>();
     List<ClientPacketHandler> packetHandlers = new ArrayList<>();
 
     public SonetClient() {
@@ -75,11 +78,11 @@ public class SonetClient implements Client {
                     channel.configureBlocking(false);
                     future.complete(null);
                 }
-                Selector selector = Selector.open();
-                channel.register(selector, SelectionKey.OP_READ, SelectionKey.OP_WRITE);
-                while (true) {
-                    selector.select();
-                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                selector.set(Selector.open());
+                channel.register(selector.get(), SelectionKey.OP_READ, SelectionKey.OP_WRITE);
+                while (valid) {
+                    selector.get().select();
+                    Iterator<SelectionKey> iterator = selector.get().selectedKeys().iterator();
                     while (iterator.hasNext()) {
                         SelectionKey key = iterator.next();
                         iterator.remove();
@@ -88,8 +91,10 @@ public class SonetClient implements Client {
                         }
                     }
                 }
+                selector.get().close();
             } catch (IOException e) {
-                e.printStackTrace();
+                abort();
+                System.exit(0);
             }
         }).start();
         return future;
@@ -97,15 +102,14 @@ public class SonetClient implements Client {
 
     private SonetPacket read() {
         try {
-            // [ 4bytes = size of packet _int ] [ 1byte = type of packet _byte ]
-            ByteBuffer returnedHeaderBuffer = ByteBuffer.allocate(5);
+            // [ 4bytes = size of packet _int ]
+            ByteBuffer returnedHeaderBuffer = ByteBuffer.allocate(4);
             channel.read(returnedHeaderBuffer);
-            SonetBuffer returnedSonetHeader = SonetBuffer.load(returnedHeaderBuffer);
+            SonetBuffer returnedSonetHeader = SonetBuffer.loadReset(returnedHeaderBuffer);
             int size = returnedSonetHeader.readInt();
-            byte type = returnedSonetHeader.readByte();
             ByteBuffer returnedBodyBuffer = ByteBuffer.allocate(size);
             channel.read(returnedBodyBuffer);
-            return PacketDeserializer.deserialize(type, returnedBodyBuffer);
+            return SonetDataDeserializer.deserializePacket(returnedBodyBuffer);
         } catch (IOException | PacketNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -113,7 +117,7 @@ public class SonetClient implements Client {
 
     private void write(SonetPacket packet) {
         try {
-            // [ 4bytes = size of packet _int ] [ 1byte = type of packet _byte ]
+            // [ 4bytes = size of packet _int ]
             SonetBuffer sonetHeader = new SonetBuffer();
 
             // The body ByteBuffer
@@ -121,7 +125,6 @@ public class SonetClient implements Client {
 
             // Write data to header
             sonetHeader.writeInt(serializedPacket.capacity());
-            sonetHeader.writeByte(PacketRegistry.getType(packet.getClass()));
 
             // Send header to the server
             channel.write(sonetHeader.toBuffer());
@@ -132,7 +135,7 @@ public class SonetClient implements Client {
             // Clear the used body ByteBuffer
             serializedPacket.clear();
         } catch (IOException e) {
-            e.printStackTrace();
+            abort();
         }
     }
 
@@ -162,6 +165,13 @@ public class SonetClient implements Client {
     public void abort() {
         if (channel != null) {
             try {
+                setValid(false);
+                if (selector.get() != null) {
+                    for (SelectionKey key : selector.get().selectedKeys()) {
+                        key.cancel();
+                    }
+                    selector.get().wakeup();
+                }
                 channel.close();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -182,6 +192,12 @@ public class SonetClient implements Client {
     @Override
     public List<ClientPacketHandler> getPacketHandlers() {
         return packetHandlers;
+    }
+
+    @Override
+    public byte[] sendRawBytes() {
+        //TODO finish. DefaultProtocol.HTTP
+        return new byte[0];
     }
 
     @Override

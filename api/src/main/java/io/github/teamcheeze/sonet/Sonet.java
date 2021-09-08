@@ -20,8 +20,8 @@ package io.github.teamcheeze.sonet;
 
 import io.github.teamcheeze.sonet.network.component.Client;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.util.CoreLoader;
-import io.github.teamcheeze.sonet.network.util.SonetFactory;
+import io.github.teamcheeze.sonet.network.util.loader.CoreLoader;
+import io.github.teamcheeze.sonet.network.util.loader.SonetFactory;
 
 public class Sonet {
     private static SonetFactory factory = null;

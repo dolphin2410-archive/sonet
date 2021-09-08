@@ -16,12 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.network.util.net;
 
-import io.github.teamcheeze.sonet.network.component.Client;
-import io.github.teamcheeze.sonet.network.component.Server;
+import java.net.InetAddress;
 
-public interface SonetFactory {
-    Client createClient();
-    Server createServer(int port);
+public class SonetAddress {
+    private InetAddress ip;
+    public SonetAddress(InetAddress address) {
+        this.ip = address;
+    }
+
+    public InetAddress getIp() {
+        return ip;
+    }
+
+    public void setIp(InetAddress ip) {
+        this.ip = ip;
+    }
 }

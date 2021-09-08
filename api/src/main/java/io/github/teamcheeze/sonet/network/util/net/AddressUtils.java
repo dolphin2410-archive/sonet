@@ -16,15 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.network.util.net;
 
-import io.github.dolphin2410.jaw.reflection.ConstructorAccessor;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-public class CoreLoader {
-    public static SonetFactory loadFactory() {
+public class AddressUtils {
+    public static InetAddress localAddress;
+
+    static {
         try {
-            return (SonetFactory) new ConstructorAccessor<>(Class.forName("io.github.teamcheeze.sonet.ISonetFactory")).newInstance();
-        } catch (ClassNotFoundException e) {
+            localAddress = InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
+        } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
     }

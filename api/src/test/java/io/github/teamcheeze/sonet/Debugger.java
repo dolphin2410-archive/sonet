@@ -16,21 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet;
 
-import java.net.InetAddress;
-
-public class SonetAddress {
-    private InetAddress ip;
-    public SonetAddress(InetAddress address) {
-        this.ip = address;
-    }
-
-    public InetAddress getIp() {
-        return ip;
-    }
-
-    public void setIp(InetAddress ip) {
-        this.ip = ip;
+public class Debugger {
+    public static void debug(Object... objs) {
+        for (Object obj : objs) {
+            if (obj.getClass().isArray()) {
+                System.out.println("An array");
+            } else {
+                System.out.println(obj.getClass() + " " + obj);
+            }
+        }
     }
 }

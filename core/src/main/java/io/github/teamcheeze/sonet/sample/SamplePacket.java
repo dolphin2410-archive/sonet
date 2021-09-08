@@ -18,11 +18,10 @@
 
 package io.github.teamcheeze.sonet.sample;
 
-import io.github.teamcheeze.sonet.annotations.ForceAllocate;
 import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
-import io.github.teamcheeze.sonet.network.PacketRegistry;
-import io.github.teamcheeze.sonet.network.data.*;
+import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
@@ -37,13 +36,13 @@ public class SamplePacket implements SonetPacket {
     @SonetData
     private String name;
 
-    public SamplePacket(UUID uuid, String name) {
+    @SonetData
+    private SampleDataContainer dataContainer;
+
+    public SamplePacket(UUID uuid, String name, SampleDataContainer dataContainer) {
         this.id = uuid;
         this.name = name;
-    }
-
-    public static void register() {
-        PacketRegistry.register((byte) 0x00, SamplePacket.class);
+        this.dataContainer = dataContainer;
     }
 
     @SonetDeserialize
@@ -52,7 +51,8 @@ public class SamplePacket implements SonetPacket {
         sonetBuffer.updateBuffer();
         UUID uuid = sonetBuffer.readUUID();
         String name = sonetBuffer.readString();
-        return new SamplePacket(uuid, name);
+        SampleDataContainer dataContainer = sonetBuffer.readContainer(SampleDataContainer.class);
+        return new SamplePacket(uuid, name, dataContainer);
     }
 
     public String getName() {
@@ -69,5 +69,13 @@ public class SamplePacket implements SonetPacket {
 
     public UUID getId() {
         return id;
+    }
+
+    public SampleDataContainer getDataContainer() {
+        return dataContainer;
+    }
+
+    public void setDataContainer(SampleDataContainer dataContainer) {
+        this.dataContainer = dataContainer;
     }
 }

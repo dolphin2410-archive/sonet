@@ -16,19 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.network.data.packet;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+public interface AbstractSonetData {
+    default SonetPacket asPacket() {
+        return (SonetPacket) this;
+    }
 
-public class AddressUtils {
-    public static InetAddress localAddress;
-
-    static {
-        try {
-            localAddress = InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
+    default SonetDataContainer asContainer() {
+        return (SonetDataContainer) this;
     }
 }

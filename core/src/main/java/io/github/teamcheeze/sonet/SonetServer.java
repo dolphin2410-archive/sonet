@@ -20,15 +20,18 @@ package io.github.teamcheeze.sonet;
 
 import io.github.dolphin2410.jaw.reflection.FieldAccessor;
 import io.github.dolphin2410.jaw.reflection.ReflectionException;
-import io.github.teamcheeze.sonet.network.*;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.data.SonetBuffer;
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
+import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
+import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+import io.github.teamcheeze.sonet.network.handlers.RawByteHandler;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
-import io.github.teamcheeze.sonet.network.util.AddressUtils;
-import io.github.teamcheeze.sonet.network.util.SonetServerAddress;
+import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
+import io.github.teamcheeze.sonet.network.util.net.SonetServerAddress;
 import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -36,10 +39,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The new server, with optimized nio features.
@@ -53,6 +54,7 @@ public class SonetServer implements Server {
     private final SonetServerAddress address;
     private final List<SonetConnectionHandler> clientHandlers = new ArrayList<>();
     private final List<ServerPacketHandler> packetHandlers = new ArrayList<>();
+    private final List<RawByteHandler> rawDataHandlers = new ArrayList<>();
 
     public SonetServer(int port) {
         this.address = new SonetServerAddress(AddressUtils.localAddress, port);
@@ -80,6 +82,11 @@ public class SonetServer implements Server {
     }
 
     @Override
+    public void addRawDataHandler(RawByteHandler handler) {
+        rawDataHandlers.add(handler);
+    }
+
+    @Override
     public void removeClientHandler(SonetConnectionHandler handler) {
         clientHandlers.remove(handler);
     }
@@ -87,6 +94,11 @@ public class SonetServer implements Server {
     @Override
     public void removePacketHandler(ServerPacketHandler handler) {
         packetHandlers.remove(handler);
+    }
+
+    @Override
+    public void removeRawDataHandler(RawByteHandler handler) {
+        rawDataHandlers.remove(handler);
     }
 
     @Override
@@ -110,9 +122,11 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public void start(boolean block) {
+    public CompletableFuture<Void> startAsync() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         Runnable r = () -> {
             try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
+                future.complete(null);
                 serverChannel.bind(new InetSocketAddress(AddressUtils.localAddress, address.getPort()));
                 serverChannel.configureBlocking(false);
                 Selector selector = Selector.open();
@@ -121,7 +135,8 @@ public class SonetServer implements Server {
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     selector.select();
                     while (iterator.hasNext()) {
-                        SelectionKey key = iterator.next();
+                        SelectionKey key;
+                        key = iterator.next();
                         iterator.remove();
                         if (key.isAcceptable()) {
                             ServerSocketChannel server = (ServerSocketChannel) key.channel();
@@ -137,16 +152,14 @@ public class SonetServer implements Server {
                             ByteBuffer header;
                             ByteBuffer body = null;
                             int size;
-                            byte packetType;
                             try {
-                                header = ByteBuffer.allocate(5);
+                                header = ByteBuffer.allocate(4);
                                 channel.read(header);
-                                SonetBuffer sonetBuffer = SonetBuffer.load(header);
+                                SonetBuffer sonetBuffer = SonetBuffer.loadReset(header);
                                 size = sonetBuffer.readInt();
                                 if (size <= 0) {
                                     continue;
                                 }
-                                packetType = sonetBuffer.readByte();
                                 body = ByteBuffer.allocate(size);
                                 channel.read(body);
                             } catch (IOException e) {
@@ -160,25 +173,25 @@ public class SonetServer implements Server {
                             SonetPacket packet = null;
                             SonetPacket received;
                             try {
-                                received = PacketDeserializer.deserialize(packetType, body);
+                                received = SonetDataDeserializer.deserializePacket(body);
                             } catch (PacketNotFoundException e) {
                                 throw new RuntimeException(e);
                             }
+
                             for (ServerPacketHandler handler : packetHandlers) {
-                                    handler.handle(received);
-                                    if (handler.packetSent) {
-                                        try {
-                                            packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();
-                                        } catch (ReflectionException e) {
-                                            e.raw.printStackTrace();
-                                        }
-                                        break;
+                                handler.handle(received);
+                                if (handler.packetSent) {
+                                    try {
+                                        packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();
+                                    } catch (ReflectionException e) {
+                                        e.raw.printStackTrace();
                                     }
+                                    break;
+                                }
                             }
                             SonetBuffer toSend = SonetBuffer.load((packet == null) ? received.serialize() : packet.serialize());
                             SonetBuffer sonetHeader = new SonetBuffer();
                             sonetHeader.writeInt(toSend.toBuffer().capacity());
-                            sonetHeader.writeByte(packetType);
                             sonetHeader.updateBuffer();
                             channel.write(sonetHeader.toBuffer());
                             channel.write(toSend.toBuffer());
@@ -189,12 +202,8 @@ public class SonetServer implements Server {
                 throw new RuntimeException(e);
             }
         };
-
-        if (block) {
-            r.run();
-        } else {
-            new Thread(r).start();
-        }
+        new Thread(r).start();
+        return future;
     }
 
     /**
@@ -202,11 +211,16 @@ public class SonetServer implements Server {
      */
     @Override
     public void start() {
-        start(true);
+        startAsync().join();
     }
 
     @Override
     public List<SocketChannel> getClients() {
         return clients;
+    }
+
+    @Override
+    public List<RawByteHandler> getRawDataHandlers() {
+        return rawDataHandlers;
     }
 }

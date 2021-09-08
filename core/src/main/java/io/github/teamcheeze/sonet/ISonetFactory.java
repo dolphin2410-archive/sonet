@@ -20,7 +20,7 @@ package io.github.teamcheeze.sonet;
 
 import io.github.teamcheeze.sonet.network.component.Client;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.util.SonetFactory;
+import io.github.teamcheeze.sonet.network.util.loader.SonetFactory;
 
 public class ISonetFactory implements SonetFactory {
     @Override

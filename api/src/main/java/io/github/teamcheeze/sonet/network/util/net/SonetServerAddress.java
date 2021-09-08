@@ -16,30 +16,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.data;
+package io.github.teamcheeze.sonet.network.util.net;
 
-import io.github.dolphin2410.jaw.util.collection.Pair;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
-public class SonetBufferItem {
-    List<Pair<BufferItemType, Object>> items = new ArrayList<>();
-    public SonetBufferItem() {
-    }
-    public int getLength() {
-        return items.size();
-    }
-
-    public byte[] getTypesArray() {
-        byte[] types = new byte[getLength()];
-        for (int i = 0; i < getLength(); i++) {
-            types[i] = items.get(i).getFirst().getType();
-        }
-        return types;
+public class SonetServerAddress extends SonetAddress {
+    private int port;
+    public SonetServerAddress(InetAddress ip, int port) {
+        super(ip);
+        this.port = port;
     }
 
-    public void set(BufferItemType type, Object item) {
-        if (type.getClazz().isInstance(item))
-            items.add(Pair.of(type, item));
+    public SocketAddress toSocketAddress() {
+        return new InetSocketAddress(getIp(), port);
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public int getPort() {
+        return port;
     }
 }

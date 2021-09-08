@@ -16,28 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.util;
+package io.github.teamcheeze.sonet.network.util.loader;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import io.github.dolphin2410.jaw.reflection.ConstructorAccessor;
 
-public class SonetServerAddress extends SonetAddress {
-    private int port;
-    public SonetServerAddress(InetAddress ip, int port) {
-        super(ip);
-        this.port = port;
-    }
-
-    public SocketAddress toSocketAddress() {
-        return new InetSocketAddress(getIp(), port);
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public int getPort() {
-        return port;
+public class CoreLoader {
+    public static SonetFactory loadFactory() {
+        try {
+            return (SonetFactory) new ConstructorAccessor<>(Class.forName("io.github.teamcheeze.sonet.ISonetFactory")).newInstance();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -18,9 +18,9 @@
 
 package io.github.teamcheeze.sonet.network.handlers;
 
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 
-public abstract class ServerPacketHandler extends SonetPacketHandler {
+public abstract class ServerPacketHandler implements SonetPacketHandler {
     public boolean packetSent = false;
     private SonetPacket packet = null;
     protected void send(SonetPacket packet) {

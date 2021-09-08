@@ -16,14 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network;
-
-import io.github.teamcheeze.sonet.network.data.SonetBuffer;
+package io.github.teamcheeze.sonet.network.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class SonetBoolean {
     private boolean internal;

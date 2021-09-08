@@ -19,9 +19,8 @@
 package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.Sonet;
-import io.github.teamcheeze.sonet.network.PacketRegistry;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.data.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import java.io.IOException;
@@ -32,7 +31,6 @@ public class ServerApplication {
     public static void main(String[] args) {
         Server server = Sonet.createServer(44444);
         System.out.println("Server initialized!");
-        SamplePacket.register();
         SonetConnectionHandler clientHandler = clientChannel -> {
             try {
                 System.out.println("User with IP: " + ((InetSocketAddress) clientChannel.getRemoteAddress()).getAddress().getHostAddress() + " successfully connected.");
@@ -45,7 +43,13 @@ public class ServerApplication {
             @Override
             public void handle(SonetPacket packet) {
                 if (packet instanceof SamplePacket samplePacket) {
-                    System.out.println("PacketId: " + PacketRegistry.getType(SamplePacket.class));
+                    SampleDataContainer container = samplePacket.getDataContainer();
+                    System.out.println("X: " + container.getX());
+                    System.out.println("Y: " + container.getY());
+                    container.setY(100.0);
+                    container.setX(50.125);
+                    System.out.println("newX: " + container.getX());
+                    System.out.println("newY: " + container.getY());
                     System.out.println("Before UUID: " + samplePacket.getId());
                     System.out.println("Before Name: " + samplePacket.getName());
                     samplePacket.setName("TheNewestModernEntity");
@@ -57,7 +61,7 @@ public class ServerApplication {
             }
         };
         server.addPacketHandler(packetHandler);
-        server.start(false);
+        server.startAsync();
         System.out.println("Will it block?");
     }
 }

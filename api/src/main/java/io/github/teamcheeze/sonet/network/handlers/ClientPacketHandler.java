@@ -18,5 +18,5 @@
 
 package io.github.teamcheeze.sonet.network.handlers;
 
-public abstract class ClientPacketHandler extends SonetPacketHandler {
+public abstract class ClientPacketHandler implements SonetPacketHandler {
 }

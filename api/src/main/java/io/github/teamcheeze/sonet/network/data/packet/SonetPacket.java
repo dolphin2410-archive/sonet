@@ -16,11 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.data;
+package io.github.teamcheeze.sonet.network.data.packet;
 
 import io.github.dolphin2410.jaw.util.collection.Pair;
 import io.github.teamcheeze.sonet.annotations.SonetData;
-import java.lang.annotation.Annotation;
+import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -30,16 +31,17 @@ import java.util.List;
 /**
  * An abstract sonetPacket
  */
-public interface SonetPacket {
+public interface SonetPacket extends AbstractSonetData {
     default ByteBuffer serialize() {
         SonetBuffer buffer = new SonetBuffer();
+        buffer.writeString(getClass().getName());
         List<Pair<Integer, Object>> l = new ArrayList<>();
         for (Field declaredField : getClass().getDeclaredFields()) {
-            Annotation[] sonetData = declaredField.getAnnotationsByType(SonetData.class);
+            SonetData[] sonetData = declaredField.getAnnotationsByType(SonetData.class);
             // TODO work on force allocating a desired byte
             if (sonetData.length == 0)
                 continue;
-            int order = ((SonetData) sonetData[0]).value();
+            int order = (sonetData[0]).value();
             try {
                 // Infer the type automatically
                 declaredField.setAccessible(true);

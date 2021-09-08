@@ -16,12 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network;
+package io.github.teamcheeze.sonet;
 
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
-
-import java.util.concurrent.CompletableFuture;
-
-public interface PacketInvoker {
-    CompletableFuture<SonetPacket> invoke(SonetPacket packet);
+public class PrimitiveTest {
+    public static void main(String[] args) {
+    }
 }

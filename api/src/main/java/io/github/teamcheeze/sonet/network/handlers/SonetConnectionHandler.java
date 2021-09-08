@@ -20,6 +20,5 @@ package io.github.teamcheeze.sonet.network.handlers;
 
 import java.nio.channels.SocketChannel;
 
-public interface SonetConnectionHandler {
-    void handle(SocketChannel clientChannel);
+public interface SonetConnectionHandler extends AbstractHandler<SocketChannel> {
 }

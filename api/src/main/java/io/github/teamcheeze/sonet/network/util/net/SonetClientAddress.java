@@ -16,12 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network;
+package io.github.teamcheeze.sonet.network.util.net;
 
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+import java.net.InetAddress;
 
-import java.util.concurrent.CompletableFuture;
-
-public interface PacketInvoker {
-    CompletableFuture<SonetPacket> invoke(SonetPacket packet);
+public class SonetClientAddress extends SonetAddress {
+    public SonetClientAddress(InetAddress address) {
+        super(address);
+    }
 }

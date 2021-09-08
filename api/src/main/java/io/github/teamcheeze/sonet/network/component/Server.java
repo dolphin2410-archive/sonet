@@ -18,13 +18,15 @@
 
 package io.github.teamcheeze.sonet.network.component;
 
+import io.github.teamcheeze.sonet.network.handlers.RawByteHandler;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
-import io.github.teamcheeze.sonet.network.util.SonetServerAddress;
+import io.github.teamcheeze.sonet.network.util.net.SonetServerAddress;
 
 import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The sonet server interface. Inherit this class for a custom server
@@ -59,16 +61,14 @@ public interface Server {
     SonetServerAddress getAddress();
 
     /**
-     * Starts the server loop. Blocks by default
+     * Starts the server, non-blocking
      */
-    void start();
+    CompletableFuture<Void> startAsync();
 
     /**
-     * Starts the server loop by either blocking or asynchronously
-     *
-     * @param block Whether to block or not
+     * Start the server, blocking
      */
-    void start(boolean block);
+    void start();
 
     /**
      * Add a client connection handler
@@ -84,6 +84,8 @@ public interface Server {
      */
     void addPacketHandler(ServerPacketHandler handler);
 
+    void addRawDataHandler(RawByteHandler handler);
+
     /**
      * Removes a client connection handler
      *
@@ -97,6 +99,8 @@ public interface Server {
      * @param handler packetHandler
      */
     void removePacketHandler(ServerPacketHandler handler);
+
+    void removeRawDataHandler(RawByteHandler handler);
 
     /**
      * Gets all client handlers
@@ -117,4 +121,6 @@ public interface Server {
      * @return list of clients
      */
     List<SocketChannel> getClients();
+
+    List<RawByteHandler> getRawDataHandlers();
 }

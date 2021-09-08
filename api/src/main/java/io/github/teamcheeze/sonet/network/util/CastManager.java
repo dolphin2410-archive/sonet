@@ -16,12 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network;
+package io.github.teamcheeze.sonet.network.util;
 
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.CompletableFuture;
+public class CastManager {
+    @NotNull
+    public static <T> T cast(Object obj, Class<T> clazz) {
+        return clazz.cast(obj);
+    }
 
-public interface PacketInvoker {
-    CompletableFuture<SonetPacket> invoke(SonetPacket packet);
+    @Nullable
+    public static <T> T safeCast(Object obj, Class<T> clazz) {
+        if (obj == null)
+            return null;
+        return clazz.cast(obj);
+    }
 }

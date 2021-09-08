@@ -16,9 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.data;
+package io.github.teamcheeze.sonet.network.data.buffer;
 
-import io.github.dolphin2410.jaw.util.collection.Pair;
+import io.github.dolphin2410.jaw.reflection.MethodAccessor;
+import io.github.dolphin2410.jaw.reflection.ReflectionException;
+import io.github.teamcheeze.sonet.network.data.SonetDataType;
+import io.github.teamcheeze.sonet.network.data.packet.SonetDataContainer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -28,6 +32,8 @@ public final class SonetBuffer {
     private ByteBuffer buffer;
     private final ByteArrayOutputStream byteArrayOutputStream;
     private final DataOutputStream dataOutputStream;
+    private int read = 0;
+    private int written = 0;
 
     public SonetBuffer() {
         this(new byte[0]);
@@ -36,18 +42,31 @@ public final class SonetBuffer {
     public SonetBuffer(byte[] data) {
         this.byteArrayOutputStream = new ByteArrayOutputStream();
         try {
-            byteArrayOutputStream.write(data);
+            if (data != null) {
+                written += data.length;
+                byteArrayOutputStream.write(data);
+            }
         } catch (IOException e) {
             System.out.println("Failed to write data.");
             e.printStackTrace();
         }
         this.dataOutputStream = new DataOutputStream(this.byteArrayOutputStream);
         this.buffer = toBuffer();
-        this.buffer.position(0);
+    }
+
+    public SonetBuffer(ByteBuffer byteBuffer) {
+        this(byteBuffer.array());
+        this.buffer.position(byteBuffer.position());
+        this.read = byteBuffer.position();
     }
 
     public static SonetBuffer load(final ByteBuffer buffer) {
-        return new SonetBuffer(buffer.array());
+        return new SonetBuffer(buffer);
+    }
+
+    public static SonetBuffer loadReset(final ByteBuffer buffer) {
+        buffer.position(0);
+        return load(buffer);
     }
 
     public void updateBuffer() {
@@ -71,21 +90,24 @@ public final class SonetBuffer {
         }
     }
 
-    public void writeItem(final SonetBufferItem item) {
-        writeBytes(item.getTypesArray());
-        for (Pair<BufferItemType, Object> pair : item.items) {
-            write(pair.getFirst().getType(), pair);
+    public void writeContainer(SonetDataContainer container) {
+        try {
+            writeBytes(((ByteBuffer) new MethodAccessor<>(container, "serialize").setDeclaringClass(SonetDataContainer.class).invoke()).array());
+        } catch (ReflectionException e) {
+            e.raw.printStackTrace();
         }
     }
 
-    public SonetBufferItem readItem() {
-        SonetBufferItem item = new SonetBufferItem();
-        byte[] types = readBytes();
-        for (byte type : types) {
-            Object obj = read(type);
-            item.set(BufferItemType.from(type), obj);
-        }
-        return item;
+    public SonetDataContainer readContainer() {
+        return SonetDataDeserializer.deserializeContainer(ByteBuffer.wrap(readBytes()));
+    }
+
+    public <T extends SonetDataContainer> T readContainer(Class<T> clazz) {
+        return clazz.cast(readContainer());
+    }
+
+    public Object read(final SonetDataType type) {
+        return read(type.getType());
     }
 
     public Object read(final byte type) {
@@ -105,12 +127,17 @@ public final class SonetBuffer {
             case 0x0c -> readUUID();
             case 0x0d -> readDouble();
             case 0x0e -> readDoubles();
+            case 0x0f -> readContainer();
             default -> throw new RuntimeException("Invalid type");
         };
     }
 
     private void write(Object object) {
-        write(BufferItemType.from(object.getClass()).getType(), object);
+        write(SonetDataType.from(object.getClass()).getType(), object);
+    }
+
+    public void write(final SonetDataType type, final Object object) {
+        write(type.getType(), object);
     }
 
     public void write(final byte type, final Object object) {
@@ -131,6 +158,7 @@ public final class SonetBuffer {
             case 0x0c -> writeUUID((UUID) object);
             case 0x0d -> writeDouble((double) object);
             case 0x0e -> writeDoubles((double[]) object);
+            case 0x0f -> writeContainer((SonetDataContainer) object);
             default -> throw new RuntimeException("Invalid type");
         }
     }
@@ -145,6 +173,7 @@ public final class SonetBuffer {
     }
 
     public char readChar() {
+        read += 2;
         return buffer.getChar();
     }
 
@@ -152,12 +181,14 @@ public final class SonetBuffer {
         try {
             dataOutputStream.writeChar(c);
             dataOutputStream.flush();
+            written += 2;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public short readShort() {
+        read += 2;
         return buffer.getShort();
     }
 
@@ -165,6 +196,22 @@ public final class SonetBuffer {
         try {
             dataOutputStream.writeShort(s);
             dataOutputStream.flush();
+            written += 2;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean readBoolean() {
+        read += 1;
+        return buffer.get() == 1;
+    }
+
+    public void writeBoolean(final boolean b) {
+        try {
+            dataOutputStream.writeByte(b ? 1 : 0);
+            dataOutputStream.flush();
+            written += 1;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -187,6 +234,7 @@ public final class SonetBuffer {
     }
 
     public float readFloat() {
+        read += 4;
         return buffer.getFloat();
     }
 
@@ -194,6 +242,7 @@ public final class SonetBuffer {
         try {
             dataOutputStream.writeFloat(f);
             dataOutputStream.flush();
+            written += 4;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -234,11 +283,13 @@ public final class SonetBuffer {
     }
 
     public int readInt() {
+        read+=4;
         return buffer.getInt();
     }
 
     public void writeInt(final int i) {
         try {
+            written += 4;
             dataOutputStream.writeInt(i);
             dataOutputStream.flush();
         } catch (IOException e) {
@@ -263,20 +314,22 @@ public final class SonetBuffer {
     }
 
     public long readLong() {
-        long l = buffer.getLong();
-        return l;
+        read+=8;
+        return buffer.getLong();
     }
 
     public void writeLong(final long l) {
         try {
             dataOutputStream.writeLong(l);
             dataOutputStream.flush();
+            written += 8;
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public double readDouble() {
+        read+=8;
         return buffer.getDouble();
     }
 
@@ -284,6 +337,7 @@ public final class SonetBuffer {
         try {
             dataOutputStream.writeDouble(d);
             dataOutputStream.flush();
+            written+=8;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -323,6 +377,7 @@ public final class SonetBuffer {
 
     public void writeByte(final byte b) {
         try {
+            written++;
             dataOutputStream.writeByte(b);
             dataOutputStream.flush();
         } catch (IOException e) {
@@ -331,6 +386,7 @@ public final class SonetBuffer {
     }
 
     public byte readByte() {
+        read++;
         return buffer.get();
     }
 
@@ -350,7 +406,51 @@ public final class SonetBuffer {
         return bytes;
     }
 
+    /**
+     * Converts SonetBuffer to ByteBuffer
+     *
+     * @return Whole data
+     */
     public ByteBuffer toBuffer() {
-        return ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
+        ByteBuffer buf = ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
+        if (buf.capacity() != written) {
+            throw new RuntimeException("The written data length and the result's size mismatch");
+        }
+        return buf;
+    }
+
+    /**
+     * Converts SonetBuffer to ByteBuffer. The default position will be the last read position, so you can resume reading again
+     *
+     * @return Data not read
+     */
+    public ByteBuffer save() {
+        ByteBuffer buffer = toBuffer();
+        buffer.position(read);
+        return buffer;
+    }
+
+    public int written() {
+        return written;
+    }
+
+    public int position() {
+        return read;
+    }
+
+    public ByteBuffer clone(ByteBuffer buffer) {
+        ByteBuffer buf = ByteBuffer.wrap(buffer.array());
+        buf.position(buffer.position());
+        return buf;
+    }
+
+    public ByteBuffer cut() {
+        ByteBuffer bf = clone(save());
+        int newByteSize = bf.capacity() - bf.position();
+        byte[] bytes = new byte[newByteSize];
+        for (int j = 0; j < newByteSize; j++) {
+            bytes[j] = bf.get();
+        }
+        return ByteBuffer.wrap(bytes);
     }
 }
