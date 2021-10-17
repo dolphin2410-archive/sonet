@@ -22,6 +22,7 @@ import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
 import io.github.teamcheeze.sonet.network.util.net.SonetClientAddress;
 import org.jetbrains.annotations.NotNull;
+
 import java.net.InetAddress;
 import java.util.List;
 import java.util.UUID;

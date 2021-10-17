@@ -21,27 +21,33 @@ package io.github.teamcheeze.sonet.network.data;
 import io.github.teamcheeze.sonet.network.data.packet.SonetDataContainer;
 
 public enum SonetDataType {
-    LONG((byte) 0x00, long.class),
-    LONG_ARRAY((byte) 0x01, Long[].class),
-    INT((byte) 0x02, Integer.class),
-    INT_ARRAY((byte) 0x03, Integer[].class),
-    BYTE((byte) 0x04, Byte.class),
-    BYTE_ARRAY((byte) 0x05, Byte[].class),
-    SHORT((byte) 0x06, Short.class),
-    SHORT_ARRAY((byte) 0x07, Short[].class),
-    FLOAT((byte) 0x08, Float.class),
-    FLOAT_ARRAY((byte) 0x09, Float[].class),
-    CHAR((byte) 0x0a, Character.class),
-    STRING((byte) 0x0b, java.lang.String.class),
-    UUID((byte) 0x0c, java.util.UUID.class),
-    DOUBLE((byte) 0x0d, Double.class),
-    DOUBLES((byte) 0x0e, Double[].class),
-    DATA_CONTAINER((byte) 0x0f, SonetDataContainer.class);
+    LONG((byte) 0x00, long.class, 8),
+    LONG_ARRAY((byte) 0x01, Long[].class, 0),
+    INT((byte) 0x02, Integer.class, 4),
+    INT_ARRAY((byte) 0x03, Integer[].class, 0),
+    BYTE((byte) 0x04, Byte.class, 1),
+    BYTE_ARRAY((byte) 0x05, Byte[].class, 0),
+    SHORT((byte) 0x06, Short.class, 2),
+    SHORT_ARRAY((byte) 0x07, Short[].class, 0),
+    FLOAT((byte) 0x08, Float.class, 4),
+    FLOAT_ARRAY((byte) 0x09, Float[].class, 0),
+    CHAR((byte) 0x0a, Character.class, 2),
+    STRING((byte) 0x0b, java.lang.String.class, 0),
+    UUID((byte) 0x0c, java.util.UUID.class, 16),
+    DOUBLE((byte) 0x0d, Double.class, 8),
+    DOUBLES((byte) 0x0e, Double[].class, 0),
+    DATA_CONTAINER((byte) 0x0f, SonetDataContainer.class, 0);
     private final byte type;
     private final Class<?> clazz;
-    SonetDataType(final byte type, final Class<?> clazz) {
+    private final int defaultSize;
+    SonetDataType(final byte type, final Class<?> clazz, final int defaultSize) {
         this.type = type;
         this.clazz = clazz;
+        this.defaultSize = defaultSize;
+    }
+
+    public int getDefaultSize() {
+        return defaultSize;
     }
 
     public static SonetDataType fromSafe(byte type) {
@@ -52,6 +58,8 @@ public enum SonetDataType {
         }
         return null;
     }
+
+
 
     public static SonetDataType fromSafe(Class<?> clazz) {
         for (SonetDataType value : values()) {

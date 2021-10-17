@@ -19,10 +19,10 @@
 package io.github.teamcheeze.sonet.network.data.packet;
 
 import io.github.teamcheeze.sonet.annotations.SonetConstruct;
-import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
 import io.github.teamcheeze.sonet.network.data.SonetDataType;
 import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 import io.github.teamcheeze.sonet.network.util.CastManager;
 
 import java.lang.annotation.Annotation;
@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
 
 public class SonetDataDeserializer {
     private static AbstractSonetData handleSonetConstruct(Class<? extends AbstractSonetData> clazz, ByteBuffer data) {
-        SonetBuffer sb = SonetBuffer.loadReset(data);
+        StaticSonetBuffer sb = StaticSonetBuffer.loadReset(data);
         for (Constructor<?> declaredConstructor : clazz.getDeclaredConstructors()) {
             SonetConstruct[] annotations = declaredConstructor.getAnnotationsByType(SonetConstruct.class);
             if (annotations.length == 0)
@@ -44,25 +44,27 @@ public class SonetDataDeserializer {
                 parameterValues[i++] = sb.read(SonetDataType.from(parameterType));
             }
             try {
+                sb.destroy();
                 return (AbstractSonetData) declaredConstructor.newInstance(parameterValues);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                sb.destroy();
                 throw new RuntimeException(e);
             }
         }
+        sb.destroy();
         return null;
     }
 
     @SuppressWarnings("unchecked")
-    private static AbstractSonetData deserializeSonetData(ByteBuffer body) {
-        SonetBuffer sb = SonetBuffer.loadReset(body);
+    private static AbstractSonetData deserializeSonetData(ByteBuffer body) throws Exception {
+        StaticSonetBuffer sb = StaticSonetBuffer.loadReset(body);
         String className = sb.readString();
         Class<? extends AbstractSonetData> clazz;
         try {
             clazz = (Class<? extends AbstractSonetData>) Class.forName(className);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (ClassCastException e) {
-            throw new RuntimeException("Not Found");
+            System.out.println("Invalid ClassName: " + className);
+            throw e;
         }
         ByteBuffer rawData = sb.cut();
         AbstractSonetData data = handleSonetConstruct(clazz, rawData);
@@ -74,19 +76,38 @@ public class SonetDataDeserializer {
             if (annotations.length == 0)
                 continue;
             try {
-                return CastManager.safeCast(method.invoke(null, rawData), AbstractSonetData.class);
+                Object result = method.invoke(null, rawData);
+                body.clear();
+                rawData.clear();
+                sb.destroy();
+                return CastManager.safeCast(result, AbstractSonetData.class);
             } catch (IllegalAccessException | InvocationTargetException e) {
+                body.clear();
+                rawData.clear();
+                sb.destroy();
                 throw new RuntimeException(e);
             }
         }
+        body.clear();
+        rawData.clear();
+        sb.destroy();
         throw new RuntimeException("The packet needs a static method '@SonetDeserialize [methodName](ByteBuffer)'");
     }
 
     public static SonetPacket deserializePacket(ByteBuffer body) throws PacketNotFoundException {
-        return deserializeSonetData(body).asPacket();
+        try {
+            return deserializeSonetData(body).asPacket();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static SonetDataContainer deserializeContainer(ByteBuffer body) {
-        return deserializeSonetData(body).asContainer();
+        try {
+            return deserializeSonetData(body).asContainer();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -18,18 +18,18 @@
 
 package io.github.teamcheeze.sonet;
 
-import io.github.dolphin2410.jaw.reflection.FieldAccessor;
-import io.github.dolphin2410.jaw.reflection.ReflectionException;
+import io.github.teamcheeze.jaw.reflection.FieldAccessor;
+import io.github.teamcheeze.jaw.reflection.MethodAccessor;
+import io.github.teamcheeze.jaw.reflection.ReflectionException;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
-import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
-import io.github.teamcheeze.sonet.network.handlers.RawByteHandler;
-import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
-import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
+import io.github.teamcheeze.sonet.network.handlers.*;
 import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 import io.github.teamcheeze.sonet.network.util.net.SonetServerAddress;
+import io.github.teamcheeze.sonet.sample.SamplePacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -39,7 +39,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -53,7 +57,7 @@ public class SonetServer implements Server {
     private final UUID id = UUID.randomUUID();
     private final SonetServerAddress address;
     private final List<SonetConnectionHandler> clientHandlers = new ArrayList<>();
-    private final List<ServerPacketHandler> packetHandlers = new ArrayList<>();
+    private final List<ServerPacketHandler<? extends SonetPacket>> packetHandlers = new ArrayList<>();
     private final List<RawByteHandler> rawDataHandlers = new ArrayList<>();
 
     public SonetServer(int port) {
@@ -77,7 +81,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public void addPacketHandler(ServerPacketHandler handler) {
+    public void addPacketHandler(ServerPacketHandler<? extends SonetPacket> handler) {
         packetHandlers.add(handler);
     }
 
@@ -92,7 +96,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public void removePacketHandler(ServerPacketHandler handler) {
+    public void removePacketHandler(ServerPacketHandler<? extends SonetPacket> handler) {
         packetHandlers.remove(handler);
     }
 
@@ -107,7 +111,7 @@ public class SonetServer implements Server {
     }
 
     @Override
-    public List<ServerPacketHandler> getPacketHandlers() {
+    public List<ServerPacketHandler<? extends SonetPacket>> getPacketHandlers() {
         return packetHandlers;
     }
 
@@ -121,26 +125,31 @@ public class SonetServer implements Server {
         return address;
     }
 
-    @Override
-    public CompletableFuture<Void> startAsync() {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        Runnable r = () -> {
+    private Runnable startRunnable() {
+        return startRunnable(null);
+    }
+
+    private Runnable startRunnable(CompletableFuture<Void> future) {
+        return () -> {
             try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-                future.complete(null);
+                if (future != null) {
+                    future.complete(null);
+                }
                 serverChannel.bind(new InetSocketAddress(AddressUtils.localAddress, address.getPort()));
                 serverChannel.configureBlocking(false);
                 Selector selector = Selector.open();
                 serverChannel.register(selector, SelectionKey.OP_ACCEPT);
                 while (valid) {
+                    int select = selector.select();
+                    if (select == 0) {
+                        continue;
+                    }
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-                    selector.select();
                     while (iterator.hasNext()) {
-                        SelectionKey key;
-                        key = iterator.next();
+                        SelectionKey key = iterator.next();
                         iterator.remove();
                         if (key.isAcceptable()) {
-                            ServerSocketChannel server = (ServerSocketChannel) key.channel();
-                            SocketChannel client = server.accept();
+                            SocketChannel client = serverChannel.accept();
                             client.configureBlocking(false);
                             for (SonetConnectionHandler handler : clientHandlers) {
                                 handler.handle(client);
@@ -148,53 +157,67 @@ public class SonetServer implements Server {
                             client.register(selector, SelectionKey.OP_READ);
                             clients.add(client);
                         } else if (key.isReadable()) {
+                            // This is the client channel
                             SocketChannel channel = (SocketChannel) key.channel();
-                            ByteBuffer header;
+
+                            // Declare ByteBuffers - header and body
+                            ByteBuffer header = ByteBuffer.allocate(4);
                             ByteBuffer body = null;
+
+                            // Declare the size of the body
                             int size;
                             try {
-                                header = ByteBuffer.allocate(4);
                                 channel.read(header);
-                                SonetBuffer sonetBuffer = SonetBuffer.loadReset(header);
-                                size = sonetBuffer.readInt();
+                                header.flip();
+                                size = header.getInt();
                                 if (size <= 0) {
-                                    continue;
+                                    return;
                                 }
                                 body = ByteBuffer.allocate(size);
                                 channel.read(body);
+                                header.clear();
                             } catch (IOException e) {
                                 key.cancel();
                                 clients.remove(channel);
                                 if (body != null) {
                                     body.clear();
                                 }
-                                continue;
+                                return;
                             }
-                            SonetPacket packet = null;
                             SonetPacket received;
                             try {
                                 received = SonetDataDeserializer.deserializePacket(body);
                             } catch (PacketNotFoundException e) {
                                 throw new RuntimeException(e);
                             }
+                            if (received == null) {
+                                System.out.println("INVALID PACKET");
+                                return;
+                            }
 
-                            for (ServerPacketHandler handler : packetHandlers) {
-                                handler.handle(received);
-                                if (handler.packetSent) {
-                                    try {
-                                        packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();
-                                    } catch (ReflectionException e) {
-                                        e.raw.printStackTrace();
+                            SonetPacket packet = null;
+                            for (ServerPacketHandler<? extends SonetPacket> handler : packetHandlers) {
+                                @SuppressWarnings("unchecked")
+                                Class<? extends SonetPacket> packetClass = (Class<? extends SonetPacket>) new MethodAccessor<>(handler, "getType").setDeclaringClass(AbstractHandler.class).invoke();
+                                if (packetClass == received.getClass()) {
+                                    new MethodAccessor<>(handler, "handle").setDeclaringClass(AbstractHandler.class).invoke(received);
+                                    if (handler.packetSent) {
+                                        try {
+                                            packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();
+                                        } catch (ReflectionException e) {
+                                            e.raw.printStackTrace();
+                                        }
+                                        break;
                                     }
-                                    break;
                                 }
                             }
-                            SonetBuffer toSend = SonetBuffer.load((packet == null) ? received.serialize() : packet.serialize());
-                            SonetBuffer sonetHeader = new SonetBuffer();
-                            sonetHeader.writeInt(toSend.toBuffer().capacity());
-                            sonetHeader.updateBuffer();
-                            channel.write(sonetHeader.toBuffer());
-                            channel.write(toSend.toBuffer());
+                            ByteBuffer bodyBuf = (packet == null) ? received.serialize() : packet.serialize();
+                            ByteBuffer headBuf = ByteBuffer.allocate(4);
+                            headBuf.putInt(bodyBuf.capacity());
+                            headBuf.flip();
+                            channel.write(new ByteBuffer[] { headBuf, bodyBuf });
+                            bodyBuf.clear();
+                            headBuf.clear();
                         }
                     }
                 }
@@ -202,7 +225,12 @@ public class SonetServer implements Server {
                 throw new RuntimeException(e);
             }
         };
-        new Thread(r).start();
+    }
+
+    @Override
+    public CompletableFuture<Void> startAsync() {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        new Thread(startRunnable(future)).start();
         return future;
     }
 
@@ -211,7 +239,7 @@ public class SonetServer implements Server {
      */
     @Override
     public void start() {
-        startAsync().join();
+        startRunnable().run();
     }
 
     @Override

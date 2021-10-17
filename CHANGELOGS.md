@@ -55,3 +55,14 @@
 - SonetPacket and SonetDataContainer inherits AbstractSonetData
 - PacketRegistry -> classname serialization -> Header to 4 bytes
 - Better SonetBuffer
+
+# v0.0.1
+
+## 2021-10-17
+- StaticSonetBuffer to fix the problem of excess heap allocation
+- Fixed a bug that prevented proper BufferIO with sockets
+- Fixed a bug that Packets couldn't be deserialized
+- Changed SonetBuffer's String read & write system from chars to bytes
+- When Server accepts packets, a specific PacketType can be declared through Generics
+- Removed all debug statements
+- Stabilized everything and ready for the first release

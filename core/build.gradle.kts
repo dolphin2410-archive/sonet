@@ -3,10 +3,10 @@ repositories {
 }
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.7.2"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation("org.jetbrains:annotations:20.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+    implementation("org.jetbrains:annotations:22.0.0")
     implementation(project(":api"))
-    implementation("io.github.teamcheeze:jaw:1.0.2")
+    implementation("io.github.teamcheeze:jaw:1.0.4")
 }
 
 tasks {

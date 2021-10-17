@@ -18,7 +18,7 @@
 
 package io.github.teamcheeze.sonet.network.data.packet;
 
-import io.github.dolphin2410.jaw.util.collection.Pair;
+import io.github.teamcheeze.jaw.util.collection.Pair;
 import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
 
@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public interface SonetDataContainer extends AbstractSonetData {
-    private ByteBuffer serialize() {
+    default ByteBuffer serialize() {
         try {
             SonetBuffer buffer = new SonetBuffer();
             buffer.writeString(getClass().getName());

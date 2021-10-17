@@ -25,12 +25,12 @@ import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.UUID;
 
 public class ServerApplication {
+
     public static void main(String[] args) {
-        Server server = Sonet.createServer(44444);
-        System.out.println("Server initialized!");
+        Server server = Sonet.createServer(9090);
+        System.out.println("Server Created");
         SonetConnectionHandler clientHandler = clientChannel -> {
             try {
                 System.out.println("User with IP: " + ((InetSocketAddress) clientChannel.getRemoteAddress()).getAddress().getHostAddress() + " successfully connected.");
@@ -39,25 +39,10 @@ public class ServerApplication {
             }
         };
         server.addClientHandler(clientHandler);
-        ServerPacketHandler packetHandler = new ServerPacketHandler() {
+        ServerPacketHandler<SamplePacket> packetHandler = new ServerPacketHandler<>() {
             @Override
-            public void handle(SonetPacket packet) {
-                if (packet instanceof SamplePacket samplePacket) {
-                    SampleDataContainer container = samplePacket.getDataContainer();
-                    System.out.println("X: " + container.getX());
-                    System.out.println("Y: " + container.getY());
-                    container.setY(100.0);
-                    container.setX(50.125);
-                    System.out.println("newX: " + container.getX());
-                    System.out.println("newY: " + container.getY());
-                    System.out.println("Before UUID: " + samplePacket.getId());
-                    System.out.println("Before Name: " + samplePacket.getName());
-                    samplePacket.setName("TheNewestModernEntity");
-                    samplePacket.setId(UUID.randomUUID());
-                    System.out.println("New Name: " + samplePacket.getName());
-                    System.out.println("New UUID: " + samplePacket.getId());
-                    send(samplePacket);
-                }
+            public void handle(SamplePacket packet) {
+                packet.setName("");
             }
         };
         server.addPacketHandler(packetHandler);

@@ -18,9 +18,11 @@
 
 package io.github.teamcheeze.sonet.network.component;
 
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.RawByteHandler;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
+import io.github.teamcheeze.sonet.network.handlers.SonetPacketHandler;
 import io.github.teamcheeze.sonet.network.util.net.SonetServerAddress;
 
 import java.nio.channels.SocketChannel;
@@ -82,7 +84,7 @@ public interface Server {
      *
      * @param handler packetHandler
      */
-    void addPacketHandler(ServerPacketHandler handler);
+    void addPacketHandler(ServerPacketHandler<? extends SonetPacket> handler);
 
     void addRawDataHandler(RawByteHandler handler);
 
@@ -98,7 +100,7 @@ public interface Server {
      *
      * @param handler packetHandler
      */
-    void removePacketHandler(ServerPacketHandler handler);
+    void removePacketHandler(ServerPacketHandler<? extends SonetPacket> handler);
 
     void removeRawDataHandler(RawByteHandler handler);
 
@@ -114,7 +116,7 @@ public interface Server {
      *
      * @return packet handlers
      */
-    List<ServerPacketHandler> getPacketHandlers();
+    List<ServerPacketHandler<? extends SonetPacket>> getPacketHandlers();
 
     /**
      * Gets list of clients

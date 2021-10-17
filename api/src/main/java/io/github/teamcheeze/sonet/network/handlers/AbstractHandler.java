@@ -18,6 +18,14 @@
 
 package io.github.teamcheeze.sonet.network.handlers;
 
+import java.lang.reflect.ParameterizedType;
+
 public interface AbstractHandler<T> {
     void handle(T data);
+
+    @SuppressWarnings("unchecked")
+    private Class<T> getType() {
+        return (Class<T>) ((ParameterizedType) getClass()
+                .getGenericSuperclass()).getActualTypeArguments()[0];
+    }
 }

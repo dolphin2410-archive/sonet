@@ -22,6 +22,7 @@ import io.github.teamcheeze.sonet.Sonet;
 import io.github.teamcheeze.sonet.network.component.Client;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
+
 import java.util.UUID;
 
 public class ClientApplication {
@@ -29,7 +30,7 @@ public class ClientApplication {
         Client client = Sonet.createClient();
         client.connect(AddressUtils.localAddress, 44444);
         System.out.println("Connected!");
-        SamplePacket packet = new SamplePacket(UUID.randomUUID(), "OldEntity", new SampleDataContainer(10.0, 215.0));
+        SamplePacket packet = new SamplePacket(UUID.randomUUID(), "OldEntity", new SampleDataContainer(10, 215));
         System.out.println("Old: " + packet.getId());
         System.out.println("Old: " + packet.getName());
         System.out.println("OldX: " + packet.getDataContainer().getX());

@@ -20,7 +20,7 @@ package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
-import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 
 import java.nio.ByteBuffer;
@@ -47,11 +47,11 @@ public class SamplePacket implements SonetPacket {
 
     @SonetDeserialize
     public static SamplePacket deserialize(ByteBuffer buffer) {
-        SonetBuffer sonetBuffer = SonetBuffer.load(buffer);
-        sonetBuffer.updateBuffer();
+        StaticSonetBuffer sonetBuffer = StaticSonetBuffer.loadReset(buffer);
         UUID uuid = sonetBuffer.readUUID();
         String name = sonetBuffer.readString();
         SampleDataContainer dataContainer = sonetBuffer.readContainer(SampleDataContainer.class);
+        sonetBuffer.destroy();
         return new SamplePacket(uuid, name, dataContainer);
     }
 

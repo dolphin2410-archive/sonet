@@ -18,7 +18,7 @@
 
 package io.github.teamcheeze.sonet.network.util.loader;
 
-import io.github.dolphin2410.jaw.reflection.ConstructorAccessor;
+import io.github.teamcheeze.jaw.reflection.ConstructorAccessor;
 
 public class CoreLoader {
     public static SonetFactory loadFactory() {

@@ -18,15 +18,16 @@
 
 package io.github.teamcheeze.sonet;
 
-import io.github.teamcheeze.sonet.network.*;
+import io.github.teamcheeze.sonet.network.PacketInvoker;
 import io.github.teamcheeze.sonet.network.component.Client;
-import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
 import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
+import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
 import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
-import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 import io.github.teamcheeze.sonet.network.util.SonetBoolean;
+import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 import io.github.teamcheeze.sonet.network.util.net.SonetClientAddress;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +42,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SonetClient implements Client {
@@ -62,13 +65,15 @@ public class SonetClient implements Client {
     @Override
     public CompletableFuture<Void> connectAsync(InetAddress ip, int port) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        SonetBoolean readAvailable = new SonetBoolean(false);
+        ArrayBlockingQueue<Runnable> readQueue = new ArrayBlockingQueue<>(1);
         invoker = packet -> {
             CompletableFuture<SonetPacket> result = new CompletableFuture<>();
             write(packet);
-            readAvailable.triggerOnceOnTrue(() -> {
-                result.complete(read());
-            });
+            try {
+                readQueue.put(() -> result.complete(read()));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             return result;
         };
         new Thread(() -> {
@@ -87,7 +92,10 @@ public class SonetClient implements Client {
                         SelectionKey key = iterator.next();
                         iterator.remove();
                         if (key.isReadable()) {
-                            readAvailable.set(true);
+                            Runnable runnable = readQueue.poll();
+                            if (runnable != null) {
+                                runnable.run();
+                            }
                         }
                     }
                 }
@@ -103,13 +111,17 @@ public class SonetClient implements Client {
     private SonetPacket read() {
         try {
             // [ 4bytes = size of packet _int ]
-            ByteBuffer returnedHeaderBuffer = ByteBuffer.allocate(4);
-            channel.read(returnedHeaderBuffer);
-            SonetBuffer returnedSonetHeader = SonetBuffer.loadReset(returnedHeaderBuffer);
-            int size = returnedSonetHeader.readInt();
-            ByteBuffer returnedBodyBuffer = ByteBuffer.allocate(size);
-            channel.read(returnedBodyBuffer);
-            return SonetDataDeserializer.deserializePacket(returnedBodyBuffer);
+            ByteBuffer head = ByteBuffer.allocate(4);
+            channel.read(head);
+            head.flip();
+            int size = head.getInt();
+            ByteBuffer body = ByteBuffer.allocate(size);
+            channel.read(body);
+            body.flip();
+            SonetPacket packet = SonetDataDeserializer.deserializePacket(body);
+            head.clear();
+            body.clear();
+            return packet;
         } catch (IOException | PacketNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -117,23 +129,22 @@ public class SonetClient implements Client {
 
     private void write(SonetPacket packet) {
         try {
-            // [ 4bytes = size of packet _int ]
-            SonetBuffer sonetHeader = new SonetBuffer();
 
             // The body ByteBuffer
             ByteBuffer serializedPacket = packet.serialize();
 
-            // Write data to header
-            sonetHeader.writeInt(serializedPacket.capacity());
+            ByteBuffer header = ByteBuffer.allocate(4);
 
-            // Send header to the server
-            channel.write(sonetHeader.toBuffer());
+            header.putInt(serializedPacket.capacity());
 
-            // Send body to the server
-            channel.write(serializedPacket);
+            header.flip();
+
+            channel.write(new ByteBuffer[] { header, serializedPacket });
 
             // Clear the used body ByteBuffer
             serializedPacket.clear();
+
+            header.clear();
         } catch (IOException e) {
             abort();
         }

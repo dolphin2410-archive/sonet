@@ -20,5 +20,5 @@ package io.github.teamcheeze.sonet.network.handlers;
 
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 
-public interface SonetPacketHandler extends AbstractHandler<SonetPacket> {
+public interface SonetPacketHandler<T extends SonetPacket> extends AbstractHandler<T> {
 }

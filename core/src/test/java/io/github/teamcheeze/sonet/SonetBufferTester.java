@@ -16,9 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.github.teamcheeze.sonet.network.handlers;
+package io.github.teamcheeze.sonet;
 
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
+import java.nio.ByteBuffer;
 
-public abstract class ClientPacketHandler<T extends SonetPacket> implements SonetPacketHandler<T> {
+public class SonetBufferTester {
+    public static void main(String[] args) {
+        SonetBuffer sonetBuffer = new SonetBuffer();
+        sonetBuffer.writeString("io.github.teamcheeze.plum");
+        ByteBuffer buf = sonetBuffer.toBuffer();
+        StaticSonetBuffer staticSonetBuffer = StaticSonetBuffer.loadReset(buf);
+        System.out.println(staticSonetBuffer.readString());
+        System.out.println(new String("Hello, World".getBytes()));
+    }
 }

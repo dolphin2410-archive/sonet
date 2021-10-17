@@ -22,42 +22,43 @@ import io.github.teamcheeze.sonet.annotations.SonetConstruct;
 import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
 import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 import io.github.teamcheeze.sonet.network.data.packet.SonetDataContainer;
 
 import java.nio.ByteBuffer;
 
 public class SampleDataContainer implements SonetDataContainer {
     @SonetData
-    private double x;
+    private int x;
 
     @SonetData
-    private double y;
+    private int y;
 
     @SonetConstruct
-    public SampleDataContainer(double x, double y) {
+    public SampleDataContainer(int x, int y) {
         this.x = x;
         this.y = y;
     }
 
     @SonetDeserialize
     public static SampleDataContainer deserialize(ByteBuffer buffer) {
-        SonetBuffer sb = SonetBuffer.load(buffer);
-        return new SampleDataContainer(sb.readDouble(), sb.readDouble());
+        StaticSonetBuffer sb = StaticSonetBuffer.loadReset(buffer);
+        return new SampleDataContainer(sb.readInt(), sb.readInt());
     }
 
-    public double getX() {
+    public int getX() {
         return x;
     }
 
-    public void setX(double x) {
+    public void setX(int x) {
         this.x = x;
     }
 
-    public double getY() {
+    public int getY() {
         return y;
     }
 
-    public void setY(double y) {
+    public void setY(int y) {
         this.y = y;
     }
 }

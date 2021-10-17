@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.teamcheeze"
-version = "0.0.1-RC"
+version = "0.0.1"
 
 allprojects {
     apply(plugin = "java")
@@ -21,8 +21,8 @@ repositories {
 dependencies {
     configurations["shade"](project(":api"))
     configurations["shade"](project(":core"))
-    configurations["shade"]("org.jetbrains:annotations:20.1.0")
-    configurations["shade"]("io.github.teamcheeze:jaw:1.0.2")
+    configurations["shade"]("org.jetbrains:annotations:22.0.0")
+    configurations["shade"]("io.github.teamcheeze:jaw:1.0.4")
 }
 
 tasks {
@@ -110,4 +110,10 @@ signing {
     isRequired = true
     sign(tasks["javadocJar"],tasks["sourcesJar"], tasks.jar.get())
     sign(publishing.publications["publication"])
+}
+
+dependencies {
+    configurations["shade"].forEach {
+        implementation(files(it))
+    }
 }

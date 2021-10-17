@@ -18,15 +18,16 @@
 
 package io.github.teamcheeze.sonet.network.data.packet;
 
-import io.github.dolphin2410.jaw.util.collection.Pair;
+import io.github.teamcheeze.jaw.util.collection.Pair;
 import io.github.teamcheeze.sonet.annotations.SonetData;
+import io.github.teamcheeze.sonet.network.data.SonetDataType;
 import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
+import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * An abstract sonetPacket
