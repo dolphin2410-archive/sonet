@@ -1,5 +1,5 @@
 # Sonet
-## v0.0.1
+## v0.0.2-Beta
 #### A simple implementation of a packet-exchanging lightweight tcp socket
 
 ### Examples

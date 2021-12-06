@@ -18,6 +18,7 @@
 
 package io.github.teamcheeze.sonet.sample;
 
+import io.github.teamcheeze.sonet.annotations.SonetConstruct;
 import io.github.teamcheeze.sonet.annotations.SonetData;
 import io.github.teamcheeze.sonet.annotations.SonetDeserialize;
 import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
@@ -39,21 +40,22 @@ public class SamplePacket implements SonetPacket {
     @SonetData
     private SampleDataContainer dataContainer;
 
+    @SonetConstruct
     public SamplePacket(UUID uuid, String name, SampleDataContainer dataContainer) {
         this.id = uuid;
         this.name = name;
         this.dataContainer = dataContainer;
     }
 
-    @SonetDeserialize
-    public static SamplePacket deserialize(ByteBuffer buffer) {
-        StaticSonetBuffer sonetBuffer = StaticSonetBuffer.loadReset(buffer);
-        UUID uuid = sonetBuffer.readUUID();
-        String name = sonetBuffer.readString();
-        SampleDataContainer dataContainer = sonetBuffer.readContainer(SampleDataContainer.class);
-        sonetBuffer.destroy();
-        return new SamplePacket(uuid, name, dataContainer);
-    }
+//    @SonetDeserialize
+//    public static SamplePacket deserialize(ByteBuffer buffer) {
+//        StaticSonetBuffer sonetBuffer = StaticSonetBuffer.loadReset(buffer);
+//        UUID uuid = sonetBuffer.readUUID();
+//        String name = sonetBuffer.readString();
+//        SampleDataContainer dataContainer = sonetBuffer.readContainer(SampleDataContainer.class);
+//        sonetBuffer.destroy();
+//        return new SamplePacket(uuid, name, dataContainer);
+//    }
 
     public String getName() {
         return name;

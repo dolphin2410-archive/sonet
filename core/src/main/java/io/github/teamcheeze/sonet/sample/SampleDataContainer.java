@@ -40,11 +40,11 @@ public class SampleDataContainer implements SonetDataContainer {
         this.y = y;
     }
 
-    @SonetDeserialize
-    public static SampleDataContainer deserialize(ByteBuffer buffer) {
-        StaticSonetBuffer sb = StaticSonetBuffer.loadReset(buffer);
-        return new SampleDataContainer(sb.readInt(), sb.readInt());
-    }
+//    @SonetDeserialize
+//    public static SampleDataContainer deserialize(ByteBuffer buffer) {
+//        StaticSonetBuffer sb = StaticSonetBuffer.loadReset(buffer);
+//        return new SampleDataContainer(sb.readInt(), sb.readInt());
+//    }
 
     public int getX() {
         return x;

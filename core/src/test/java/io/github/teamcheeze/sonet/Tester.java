@@ -18,12 +18,10 @@
 
 package io.github.teamcheeze.sonet;
 
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 import io.github.teamcheeze.sonet.sample.SampleDataContainer;
 import io.github.teamcheeze.sonet.sample.SamplePacket;
-
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,7 +49,7 @@ public class Tester {
         AtomicInteger x = new AtomicInteger();
         ex.scheduleAtFixedRate(() -> {
             client.sendPacket(new SamplePacket(UUID.randomUUID(), "NAME", new SampleDataContainer(x.getAndIncrement(), 10)));
-        },0, 100, TimeUnit.MILLISECONDS);
+        },0, 1, TimeUnit.MICROSECONDS);
 
     }
 }

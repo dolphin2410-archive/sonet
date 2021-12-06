@@ -23,7 +23,7 @@ import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 public abstract class ServerPacketHandler<T extends SonetPacket> implements SonetPacketHandler<T> {
     public boolean packetSent = false;
     private SonetPacket packet = null;
-    protected void send(T packet) {
+    protected void send(SonetPacket packet) {
         if (!packetSent) {
             packetSent = true;
             this.packet = packet;

@@ -33,6 +33,7 @@ import io.github.teamcheeze.sonet.sample.SamplePacket;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -200,7 +201,12 @@ public class SonetServer implements Server {
                                 @SuppressWarnings("unchecked")
                                 Class<? extends SonetPacket> packetClass = (Class<? extends SonetPacket>) new MethodAccessor<>(handler, "getType").setDeclaringClass(AbstractHandler.class).invoke();
                                 if (packetClass == received.getClass()) {
-                                    new MethodAccessor<>(handler, "handle").setDeclaringClass(AbstractHandler.class).invoke(received);
+                                    try {
+                                        new MethodAccessor<>(handler, "handle").setDeclaringClass(AbstractHandler.class).invoke(received);
+                                    } catch (ReflectionException e) {
+                                        ((InvocationTargetException) e.raw.getCause()).printStackTrace();
+                                        return;
+                                    }
                                     if (handler.packetSent) {
                                         try {
                                             packet = (SonetPacket) new FieldAccessor<>(handler, "packet").setDeclaringClass(ServerPacketHandler.class).get();

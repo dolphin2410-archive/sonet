@@ -66,3 +66,8 @@
 - When Server accepts packets, a specific PacketType can be declared through Generics
 - Removed all debug statements
 - Stabilized everything and ready for the first release
+
+# v0.0.2-Beta
+
+## 2021-10-17
+- Fixed @SonetConstruct bug

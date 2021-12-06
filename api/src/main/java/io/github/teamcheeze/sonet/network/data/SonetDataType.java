@@ -63,7 +63,7 @@ public enum SonetDataType {
 
     public static SonetDataType fromSafe(Class<?> clazz) {
         for (SonetDataType value : values()) {
-            if (value.getClazz() == clazz) {
+            if (value.getClazz() == convertPrimitive(clazz)) {
                 return value;
             }
         }
@@ -81,14 +81,12 @@ public enum SonetDataType {
 
     public static SonetDataType from(Class<?> clazz) {
         for (SonetDataType value : values()) {
-            if (value.getClazz() == clazz) {
+            if (value.getClazz() == convertPrimitive(clazz)) {
                 return value;
             }
         }
         if (SonetDataContainer.class.isAssignableFrom(clazz)) {
             return SonetDataType.DATA_CONTAINER;
-        } else {
-            System.out.println("NOT " + clazz);
         }
         throw new RuntimeException("No item found");
     }
@@ -99,6 +97,36 @@ public enum SonetDataType {
                 return true;
         }
         return false;
+    }
+
+    public static Class<?> convertPrimitive(Class<?> clazz) {
+        if (clazz == int.class) {
+            return Integer.class;
+        } else if (clazz == double.class) {
+            return Double.class;
+        } else if (clazz == float.class) {
+            return Float.class;
+        } else if (clazz == long.class) {
+            return Long.class;
+        } else if (clazz == short.class) {
+            return Short.class;
+        } else if (clazz == byte.class) {
+            return Byte.class;
+        } else if (clazz == int[].class) {
+            return Integer[].class;
+        } else if (clazz == double[].class) {
+            return Double.class;
+        } else if (clazz == float[].class) {
+            return Float[].class;
+        } else if (clazz == long[].class) {
+            return Long[].class;
+        } else if (clazz == short[].class) {
+            return Short[].class;
+        } else if (clazz == byte[].class) {
+            return Byte[].class;
+        } else {
+            return clazz;
+        }
     }
 
     public byte getType() {

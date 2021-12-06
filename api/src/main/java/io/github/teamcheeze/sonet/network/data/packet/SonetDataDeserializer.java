@@ -35,23 +35,21 @@ public class SonetDataDeserializer {
     private static AbstractSonetData handleSonetConstruct(Class<? extends AbstractSonetData> clazz, ByteBuffer data) {
         StaticSonetBuffer sb = StaticSonetBuffer.loadReset(data);
         for (Constructor<?> declaredConstructor : clazz.getDeclaredConstructors()) {
-            SonetConstruct[] annotations = declaredConstructor.getAnnotationsByType(SonetConstruct.class);
-            if (annotations.length == 0)
+            SonetConstruct annotations = declaredConstructor.getAnnotation(SonetConstruct.class);
+            if (annotations == null) {
                 continue;
+            }
             Object[] parameterValues = new Object[declaredConstructor.getParameterCount()];
             int i = 0;
             for (Class<?> parameterType : declaredConstructor.getParameterTypes()) {
                 parameterValues[i++] = sb.read(SonetDataType.from(parameterType));
             }
             try {
-                sb.destroy();
                 return (AbstractSonetData) declaredConstructor.newInstance(parameterValues);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-                sb.destroy();
-                throw new RuntimeException(e);
+                return null;
             }
         }
-        sb.destroy();
         return null;
     }
 
