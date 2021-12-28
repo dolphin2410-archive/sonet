@@ -38,11 +38,11 @@ public interface SonetPacket extends AbstractSonetData {
         buffer.writeString(getClass().getName());
         List<Pair<Integer, Object>> l = new ArrayList<>();
         for (Field declaredField : getClass().getDeclaredFields()) {
-            SonetData[] sonetData = declaredField.getAnnotationsByType(SonetData.class);
-            // TODO work on force allocating a desired byte
-            if (sonetData.length == 0)
+            SonetData sonetData = declaredField.getAnnotation(SonetData.class);
+            if (sonetData == null) {
                 continue;
-            int order = (sonetData[0]).value();
+            }
+            int order = sonetData.value();
             try {
                 // Infer the type automatically
                 declaredField.setAccessible(true);

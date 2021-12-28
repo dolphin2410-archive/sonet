@@ -1,3 +1,6 @@
+# v0.0.4
+- Fixed annotation checking method
+
 # v0.0.3
 - Event Based client packet read.
 - Fixed AddressUtil Bug

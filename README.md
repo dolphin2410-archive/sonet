@@ -1,9 +1,13 @@
 # Sonet
-#### A simple implementation of a packet-exchanging lightweight tcp socket
+***Lightweight TCP Communication Library***
 
-### Examples
-- [ClientExample](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/ClientApplication.java)
-- [ServerExample](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/ServerApplication.java)
-- [SamplePacket](https://github.com/dolphin2410/sonet/tree/main/core/src/main/java/io/github/teamcheeze/sonet/sample/SamplePacket.java)
+## Introduction
+The sonet project was first designed to work as a remote computing software. It was then improved to work as a game network library. Now, it is ready to be used in a lot of other fields of networking!
 
-## [ChangeLogs](./CHANGELOGS.md)
+## Warning
+This project is currently under development and is unstable. Please contribute or file an issue in order to help this project.
+
+## License
+Licensed under the Apache 2.0 License
+
+## [CHANGELOGS.md](./CHANGELOGS.md)
