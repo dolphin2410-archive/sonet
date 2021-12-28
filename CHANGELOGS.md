@@ -1,3 +1,7 @@
+# v0.0.5
+- Fix debug statements
+- Fix program exiting without any logs
+
 # v0.0.4
 - Fixed annotation checking method
 

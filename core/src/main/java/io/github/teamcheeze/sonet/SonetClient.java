@@ -84,8 +84,7 @@ public class SonetClient implements Client {
                 }
                 selector.get().close();
             } catch (IOException e) {
-                abort();
-                System.exit(0);
+                throw new RuntimeException(e);
             }
         }).start();
         return future;

@@ -227,8 +227,6 @@ public class SonetServer implements Server {
                         }
                     }
                 }
-                System.out.println("Runnable Started!");
-
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

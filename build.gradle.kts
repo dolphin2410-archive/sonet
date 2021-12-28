@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.teamcheeze"
-version = "0.0.4"
+version = "0.0.5"
 
 allprojects {
     apply(plugin = "java")
