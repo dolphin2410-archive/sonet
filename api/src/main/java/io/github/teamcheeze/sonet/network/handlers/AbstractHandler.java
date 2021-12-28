@@ -18,10 +18,17 @@
 
 package io.github.teamcheeze.sonet.network.handlers;
 
+import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+
 import java.lang.reflect.ParameterizedType;
 
 public interface AbstractHandler<T> {
     void handle(T data);
+
+    @SuppressWarnings("unchecked")
+    default void handle_unsafe(SonetPacket packet) {
+        handle((T) packet);
+    }
 
     @SuppressWarnings("unchecked")
     private Class<T> getType() {

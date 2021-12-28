@@ -23,5 +23,5 @@ import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import java.util.concurrent.CompletableFuture;
 
 public interface PacketInvoker {
-    CompletableFuture<SonetPacket> invoke(SonetPacket packet);
+    void invoke(SonetPacket packet);
 }

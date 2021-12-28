@@ -21,4 +21,14 @@ package io.github.teamcheeze.sonet.network.handlers;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 
 public abstract class ClientPacketHandler<T extends SonetPacket> implements SonetPacketHandler<T> {
+
+    @SuppressWarnings("unchecked")
+    public boolean isHandleable(SonetPacket clazz) {
+        try {
+            T ignored = (T) clazz;
+            return true;
+        } catch (ClassCastException e) {
+            return false;
+        }
+    }
 }

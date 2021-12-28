@@ -18,19 +18,14 @@
 
 package io.github.teamcheeze.sonet;
 
-import io.github.teamcheeze.sonet.network.PacketInvoker;
 import io.github.teamcheeze.sonet.network.component.Client;
-import io.github.teamcheeze.sonet.network.data.buffer.SonetBuffer;
-import io.github.teamcheeze.sonet.network.data.buffer.StaticSonetBuffer;
 import io.github.teamcheeze.sonet.network.data.packet.PacketNotFoundException;
 import io.github.teamcheeze.sonet.network.data.packet.SonetDataDeserializer;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
-import io.github.teamcheeze.sonet.network.util.SonetBoolean;
 import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 import io.github.teamcheeze.sonet.network.util.net.SonetClientAddress;
 import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -42,19 +37,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SonetClient implements Client {
     private final SonetClientAddress address;
     private final UUID uuid;
     private boolean valid;
-    private PacketInvoker invoker = null;
     private SocketChannel channel = null;
     private final AtomicReference<Selector> selector = new AtomicReference<>();
-    List<ClientPacketHandler> packetHandlers = new ArrayList<>();
+    private final List<ClientPacketHandler<? extends SonetPacket>> packetHandlers = new ArrayList<>();
 
     public SonetClient() {
         this.uuid = UUID.randomUUID();
@@ -65,17 +57,6 @@ public class SonetClient implements Client {
     @Override
     public CompletableFuture<Void> connectAsync(InetAddress ip, int port) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        ArrayBlockingQueue<Runnable> readQueue = new ArrayBlockingQueue<>(1);
-        invoker = packet -> {
-            CompletableFuture<SonetPacket> result = new CompletableFuture<>();
-            write(packet);
-            try {
-                readQueue.put(() -> result.complete(read()));
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return result;
-        };
         new Thread(() -> {
             try {
                 channel = SocketChannel.open();
@@ -92,9 +73,11 @@ public class SonetClient implements Client {
                         SelectionKey key = iterator.next();
                         iterator.remove();
                         if (key.isReadable()) {
-                            Runnable runnable = readQueue.poll();
-                            if (runnable != null) {
-                                runnable.run();
+                            SonetPacket packet = read();
+                            for (ClientPacketHandler<? extends SonetPacket> handler : packetHandlers) {
+                                if (handler.isHandleable(packet)) {
+                                    handler.handle_unsafe(packet);
+                                }
                             }
                         }
                     }
@@ -150,16 +133,9 @@ public class SonetClient implements Client {
         }
     }
 
-    public CompletableFuture<SonetPacket> sendPacketAsync(SonetPacket packet) {
-        if (invoker != null) {
-            return invoker.invoke(packet);
-        }
-        throw new RuntimeException("There is no invoker registered");
-    }
-
     @Override
-    public SonetPacket sendPacket(SonetPacket packet) {
-        return sendPacketAsync(packet).join();
+    public void sendPacket(SonetPacket packet) {
+        write(packet);
     }
 
     @Override
@@ -191,17 +167,17 @@ public class SonetClient implements Client {
     }
 
     @Override
-    public void addPacketHandler(ClientPacketHandler handler) {
+    public <T extends SonetPacket> void addPacketHandler(ClientPacketHandler<T> handler) {
         packetHandlers.add(handler);
     }
 
     @Override
-    public void removePacketHandler(ClientPacketHandler handler) {
+    public <T extends SonetPacket> void removePacketHandler(ClientPacketHandler<T> handler) {
         packetHandlers.remove(handler);
     }
 
     @Override
-    public List<ClientPacketHandler> getPacketHandlers() {
+    public List<ClientPacketHandler<? extends SonetPacket>> getPacketHandlers() {
         return packetHandlers;
     }
 

@@ -20,28 +20,35 @@ package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.Sonet;
 import io.github.teamcheeze.sonet.network.component.Client;
+import io.github.teamcheeze.sonet.network.component.Server;
 import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
+import io.github.teamcheeze.sonet.network.handlers.ClientPacketHandler;
 import io.github.teamcheeze.sonet.network.util.net.AddressUtils;
 
 import java.util.UUID;
 
 public class ClientApplication {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Client client = Sonet.createClient();
-        client.connect(AddressUtils.localAddress, 44444);
+        client.connect(AddressUtils.localAddress, 9090);
         System.out.println("Connected!");
         SamplePacket packet = new SamplePacket(UUID.randomUUID(), "OldEntity", new SampleDataContainer(10, 215));
         System.out.println("Old: " + packet.getId());
         System.out.println("Old: " + packet.getName());
         System.out.println("OldX: " + packet.getDataContainer().getX());
         System.out.println("OldY: " + packet.getDataContainer().getY());
-        SonetPacket returned = client.sendPacket(packet);
-        if (returned instanceof SamplePacket samplePacket) {
-            System.out.println("New: " + samplePacket.getName());
-            System.out.println("New: " + samplePacket.getId());
-            System.out.println("NewX: " + samplePacket.getDataContainer().getX());
-            System.out.println("NewY: " + samplePacket.getDataContainer().getY());
-        }
-        client.abort();
+        client.addPacketHandler(new ClientPacketHandler<SamplePacket>() {
+            @Override
+            public void handle(SamplePacket data) {
+                System.out.println("New: " + data.getName());
+                System.out.println("New: " + data.getId());
+                System.out.println("NewX: " + data.getDataContainer().getX());
+                System.out.println("NewY: " + data.getDataContainer().getY());
+            }
+        });
+        client.sendPacket(packet);
+//        client.abort();
+//        thread.join();
+
     }
 }

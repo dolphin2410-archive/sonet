@@ -1,3 +1,12 @@
+# v0.0.3
+- Event Based client packet read.
+- Fixed AddressUtil Bug
+
+# v0.0.2-Beta
+
+## 2021-10-17
+- Fixed @SonetConstruct bug
+
 # v0.0.1-Beta
 ## 2021-08-06
 - Started project as RemoteActions
@@ -66,8 +75,3 @@
 - When Server accepts packets, a specific PacketType can be declared through Generics
 - Removed all debug statements
 - Stabilized everything and ready for the first release
-
-# v0.0.2-Beta
-
-## 2021-10-17
-- Fixed @SonetConstruct bug

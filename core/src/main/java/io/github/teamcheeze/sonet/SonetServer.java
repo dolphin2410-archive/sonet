@@ -126,7 +126,7 @@ public class SonetServer implements Server {
         return address;
     }
 
-    private Runnable startRunnable() {
+    public Runnable startRunnable() {
         return startRunnable(null);
     }
 
@@ -204,7 +204,7 @@ public class SonetServer implements Server {
                                     try {
                                         new MethodAccessor<>(handler, "handle").setDeclaringClass(AbstractHandler.class).invoke(received);
                                     } catch (ReflectionException e) {
-                                        ((InvocationTargetException) e.raw.getCause()).printStackTrace();
+                                        e.raw.getCause().printStackTrace();
                                         return;
                                     }
                                     if (handler.packetSent) {
@@ -227,6 +227,8 @@ public class SonetServer implements Server {
                         }
                     }
                 }
+                System.out.println("Runnable Started!");
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

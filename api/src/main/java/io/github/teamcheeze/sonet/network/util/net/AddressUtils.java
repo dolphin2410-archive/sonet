@@ -26,7 +26,7 @@ public class AddressUtils {
 
     static {
         try {
-            localAddress = InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
+            localAddress = InetAddress.getByName("127.0.0.1");
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }

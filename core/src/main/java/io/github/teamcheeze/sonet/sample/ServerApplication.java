@@ -19,16 +19,20 @@
 package io.github.teamcheeze.sonet.sample;
 
 import io.github.teamcheeze.sonet.Sonet;
+import io.github.teamcheeze.sonet.SonetServer;
 import io.github.teamcheeze.sonet.network.component.Server;
-import io.github.teamcheeze.sonet.network.data.packet.SonetPacket;
 import io.github.teamcheeze.sonet.network.handlers.ServerPacketHandler;
 import io.github.teamcheeze.sonet.network.handlers.SonetConnectionHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
 
 public class ServerApplication {
-
     public static void main(String[] args) {
+        run();
+    }
+
+    public static void run() {
         Server server = Sonet.createServer(9090);
         System.out.println("Server Created");
         SonetConnectionHandler clientHandler = clientChannel -> {
@@ -47,6 +51,5 @@ public class ServerApplication {
         };
         server.addPacketHandler(packetHandler);
         server.startAsync();
-        System.out.println("Will it block?");
     }
 }

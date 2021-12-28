@@ -47,9 +47,8 @@ public interface Client {
     /**
      * Send a SonetPacket object to the server
      * @param packet The packet to send
-     * @return The returned packet
      */
-    SonetPacket sendPacket(SonetPacket packet);
+    void sendPacket(SonetPacket packet);
 
     /**
      * The virtual ID that is used to identify the specific client from the server
@@ -80,11 +79,9 @@ public interface Client {
      */
     void setValid(boolean valid);
 
-    void addPacketHandler(ClientPacketHandler handler);
-
-    void removePacketHandler(ClientPacketHandler handler);
-
-    List<ClientPacketHandler> getPacketHandlers();
+    <T extends SonetPacket> void addPacketHandler(ClientPacketHandler<T> handler);
+    <T extends SonetPacket> void removePacketHandler(ClientPacketHandler<T> handler);
+    List<ClientPacketHandler<? extends SonetPacket>> getPacketHandlers();
 
     byte[] sendRawBytes();
 
